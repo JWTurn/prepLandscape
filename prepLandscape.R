@@ -15,8 +15,15 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("NEWS.md", "README.md", "prepLandscape.Rmd"),
-  reqdPkgs = list("SpaDES.core (>= 2.1.5.9002)", "ggplot2"),
+  reqdPkgs = list("SpaDES.core (>= 2.1.5.9002)", "ggplot2", "terra", "sf"),
   parameters = bindrows(
+    defineParameter("historicLandYears", "integer", 2010:2023, NA, NA,
+                    paste0("This is the year range we use historic (not simulated) landscape layers.")),
+    defineParameter("harvURL", "integer", "https://opendata.nfis.org/downloads/forest_change/CA_Forest_Harvest_1985-2020.zip", NA, NA,
+                    paste0("This is the year the initial disturbance layers are from", 
+                           "and used for time since variables.",
+                           "This parameter would need to be updated if use a different year of data.")),
+    
     #defineParameter("paramName", "paramClass", value, min, max, "parameter description"),
     defineParameter(".plots", "character", "screen", NA, NA,
                     "Used by Plots function, which can be optionally used here"),
@@ -39,19 +46,31 @@ defineModule(sim, list(
   ),
   inputObjects = bindrows(
     #expectsInput("objectName", "objectClass", "input object description", sourceURL, ...),
-    expectsInput(objectName = NA, objectClass = NA, desc = NA, sourceURL = NA)
+    #expectsInput(objectName = NA, objectClass = NA, desc = NA, sourceURL = NA)
+    expectsInput(objectName = 'harvURL', objectClass = 'SpatRaster', 
+                 desc = 'harvest history', 
+                 sourceURL = "https://opendata.nfis.org/downloads/forest_change/CA_Forest_Harvest_1985-2020.zip"),
+    
   ),
   outputObjects = bindrows(
     #createsOutput("objectName", "objectClass", "output object description", ...),
-    createsOutput(objectName = NA, objectClass = NA, desc = NA)
+    createsOutput(objectName = 'historicHarv', objectClass = 'spatRaster', 
+                  desc = 'spatRaster of historic harvest within extended study area')
   )
 ))
 
 
 doEvent.prepLandscape.init <- function(sim, eventTime, eventType, priority) {
-    x <- rnorm(10)
-    y <- x + rnorm(10)
-    model <- lm(y ~ x)
+  cacheTags <- c(currentModule(sim), "function:.inputObjects") 
+  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
+  
+  sim$historicHarv <- reproducible::prepInputs(url = harvURL,
+                                   destinationPath = dPath,
+                                   to = rasterToMatch_extendedLandscape, 
+                                   fun = 'terra::rast') |>
+    Cache()
+  
+  
   return(sim)
 }
 
@@ -121,7 +140,7 @@ Event2 <- function(sim) {
   #   sim$map <- Cache(prepInputs, extractURL('map')) # download, extract, load file from url in sourceURL
   # }
 
-  #cacheTags <- c(currentModule(sim), "function:.inputObjects") ## uncomment this if Cache is being used
+  cacheTags <- c(currentModule(sim), "function:.inputObjects") ## uncomment this if Cache is being used
   dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
