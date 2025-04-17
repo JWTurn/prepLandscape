@@ -62,13 +62,26 @@ defineModule(sim, list(
 
 doEvent.prepLandscape.init <- function(sim, eventTime, eventType, priority) {
   cacheTags <- c(currentModule(sim), "function:.inputObjects") 
-  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
+  dPath <- asPath(getOption("reproducible.destinationPath", inputPath(sim)), 1)
   
   sim$historicHarv <- reproducible::prepInputs(url = harvURL,
                                    destinationPath = dPath,
                                    to = rasterToMatch_extendedLandscape, 
                                    fun = 'terra::rast') |>
     Cache()
+  
+  for (ii in P(sim)$historicLandYears) {
+    mod$historicLand[[P(sim)$historicLandYears[[ii]]]] <- reproducible::prepInputs(
+      url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", P(sim)$historicLandYears[[ii]], ".zip"),
+      destinationPath = dPath,
+      to = rasterToMatch_extendedLandscape,
+      method = 'near', # does this work? not sure how to specify
+      fun = 'terra::rast') |>
+      Cache()
+  }
+  
+  
+  
   
   
   return(sim)
@@ -141,7 +154,7 @@ Event2 <- function(sim) {
   # }
 
   cacheTags <- c(currentModule(sim), "function:.inputObjects") ## uncomment this if Cache is being used
-  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
+  dPath <- asPath(getOption("reproducible.destinationPath", inputPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   # ! ----- EDIT BELOW ----- ! #
