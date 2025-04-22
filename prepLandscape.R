@@ -61,6 +61,7 @@ defineModule(sim, list(
 
 
 doEvent.prepLandscape.init <- function(sim, eventTime, eventType, priority) {
+  
   cacheTags <- c(currentModule(sim), "function:.inputObjects") 
   dPath <- asPath(getOption("reproducible.destinationPath", inputPath(sim)), 1)
   
@@ -69,6 +70,7 @@ doEvent.prepLandscape.init <- function(sim, eventTime, eventType, priority) {
                                    to = rasterToMatch_extendedLandscape, 
                                    fun = 'terra::rast') |>
     Cache()
+  sim$historicHarv[sim$historicHarv==0]<-NA
   
   for (ii in P(sim)$historicLandYears) {
     mod$historicLand[[P(sim)$historicLandYears[[ii]]]] <- reproducible::prepInputs(
@@ -80,7 +82,8 @@ doEvent.prepLandscape.init <- function(sim, eventTime, eventType, priority) {
       Cache()
   }
   
-  
+  make_landforest_prop_spades(landYearsStack = mod$historicLandYears, crs, 
+                              buff = P(sim)$buffer, where2save = dataPath(sim))
   
   
   
