@@ -2,7 +2,7 @@
 #' @export
 #' @author Julie W. Turner
 #' 
-make_landforest_prop <- function(landYearsStack, studyArea, crs, buff, startyr, endyr, where2save){
+make_landforest_prop <- function(landYearsStack, crs, buff, startyr = NULL, endyr = NULL, where2save){
   if(is.null(startyr)&is.null(endyr)){
     yrs <- names(landYearsStack)
   } else {
@@ -16,7 +16,7 @@ make_landforest_prop <- function(landYearsStack, studyArea, crs, buff, startyr, 
   
 
  
-   sArea <- vect(studyArea)
+   #sArea <- vect(studyArea)
    # What to buffer for proportion of landclasses
    buff.diam <- buff  ## median step length rounded down to nearest 50
   
