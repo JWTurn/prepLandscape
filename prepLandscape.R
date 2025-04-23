@@ -76,21 +76,25 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
         Cache()
       sim$historicHarv[sim$historicHarv==0]<-NA
       
-      # set these in setupProj
-      rtms <- list(rasterToMatch_extendedLandscape, rasterToMatch_extendedLandscapeBig)
+      # TODO set these in setupProj
+      rtms <- list(rasterToMatch_extendedLandscape30m, rasterToMatch_extendedLandscape500m)
       names(rtms)  <- c("window30", 'agg500') 
+      rtmsFuns <- c(paste0('make_landforest_prop_spades(targetFile = targetFile, buff = ',
+                          P(sim)$buffer,', where2save = dataPath(sim))'),
+                   paste('aggregate_landforest_spades(targetFile = targetFile', 
+                               ', where2save = dataPath(sim))'))
       rtmsDigest <- .robustDigest(rtms)
-      mod$historicLand <- Map(rtmname = names(rtms), rtm = rtms, rtmDigest = rtmsDigest, function(rtm, rtmname, rtmDigest) {
+      mod$historicLand <- Map(rtmname = names(rtms), rtm = rtms, 
+                              rtmDigest = rtmsDigest, rtmFun = rtmsFuns, function(rtm, rtmname, rtmDigest, rtmFun) {
         
         Map(ii=P(sim)$historicLandYears, function(ii){
           reproducible::prepInputs(
             url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
             destinationPath = dPath, # end pre process
-            fun = make_landforest_prop_spades(targetFile = targetFile, 
-                                              buff = P(sim)$buffer, where2save = dataPath(sim)),
+            fun = rtmFun, # end process?
             to = rtm,
             method = 'near', 
-            writeTo = '') |> ## TODO set name
+            writeTo = file.path(dataPath(sim), paste0('propLand_', rtmname, '_', ii, '.tif'))) |> ## TODO set name
             Cache(omitArgs = "to", .cacheExtra = rtmDigest)
         })
         # historicLand[[P(sim)$historicLandYears[[ii]]]] <- reproducible::prepInputs(
@@ -237,8 +241,8 @@ Event2 <- function(sim) {
   #   sim$map <- Cache(prepInputs, extractURL('map')) # download, extract, load file from url in sourceURL
   # }
 
-  #cacheTags <- c(currentModule(sim), "function:.inputObjects") ## uncomment this if Cache is being used
-  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
+  cacheTags <- c(currentModule(sim), "function:.inputObjects") ## uncomment this if Cache is being used
+  dPath <- asPath(getOption("reproducible.destinationPath", inputPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   # ! ----- EDIT BELOW ----- ! #
