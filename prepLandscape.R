@@ -54,66 +54,121 @@ defineModule(sim, list(
   ),
   outputObjects = bindrows(
     #createsOutput("objectName", "objectClass", "output object description", ...),
+    #createsOutput(objectName = NA, objectClass = NA, desc = NA)
     createsOutput(objectName = 'historicHarv', objectClass = 'spatRaster', 
                   desc = 'spatRaster of historic harvest within extended study area')
   )
 ))
 
+doEvent.prepLandscape = function(sim, eventTime, eventType) {
+  switch(
+    eventType,
+    init = {
+      ### check for more detailed object dependencies:
+      ### (use `checkObject` or similar)
+      cacheTags <- c(currentModule(sim), "function:.inputObjects") 
+      dPath <- asPath(getOption("reproducible.destinationPath", inputPath(sim)), 1)
+      
+      sim$historicHarv <- reproducible::prepInputs(url = harvURL,
+                                                   destinationPath = dPath,
+                                                   to = rasterToMatch_extendedLandscape, 
+                                                   fun = 'terra::rast') |>
+        Cache()
+      sim$historicHarv[sim$historicHarv==0]<-NA
+      
+      # set these in setupProj
+      rtms <- list(rasterToMatch_extendedLandscape, rasterToMatch_extendedLandscapeBig)
+      names(rtms)  <- c("window30", 'agg500') 
+      rtmsDigest <- .robustDigest(rtms)
+      mod$historicLand <- Map(rtmname = names(rtms), rtm = rtms, rtmDigest = rtmsDigest, function(rtm, rtmname, rtmDigest) {
+        
+        Map(ii=P(sim)$historicLandYears, function(ii){
+          reproducible::prepInputs(
+            url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
+            destinationPath = dPath, # end pre process
+            fun = make_landforest_prop_spades(targetFile = targetFile, 
+                                              buff = P(sim)$buffer, where2save = dataPath(sim)),
+            to = rtm,
+            method = 'near', 
+            writeTo = '') |> ## TODO set name
+            Cache(omitArgs = "to", .cacheExtra = rtmDigest)
+        })
+        # historicLand[[P(sim)$historicLandYears[[ii]]]] <- reproducible::prepInputs(
+        #   url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", P(sim)$historicLandYears[[ii]], ".zip"),
+        #   destinationPath = dPath, # end pre process
+        #   fun = make_landforest_prop_spades(targetFile = targetFile, 
+        #                                     buff = P(sim)$buffer, where2save = dataPath(sim)),
+        #   to = rtm,
+        #   method = 'near', 
+        #   writeTo = '') |>
+        #   Cache()
+        
+        
+      })|>
+        Cache()
+      
+    
+      # schedule future event(s)
+      # sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "prepLandscape", "plot")
+      # sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "prepLandscape", "save")
+    },
+    plot = {
+      # ! ----- EDIT BELOW ----- ! #
+      # do stuff for this event
 
-doEvent.prepLandscape.init <- function(sim, eventTime, eventType, priority) {
-  
-  cacheTags <- c(currentModule(sim), "function:.inputObjects") 
-  dPath <- asPath(getOption("reproducible.destinationPath", inputPath(sim)), 1)
-  
-  sim$historicHarv <- reproducible::prepInputs(url = harvURL,
-                                   destinationPath = dPath,
-                                   to = rasterToMatch_extendedLandscape, 
-                                   fun = 'terra::rast') |>
-    Cache()
-  sim$historicHarv[sim$historicHarv==0]<-NA
-  
-  # set these in setupProj
-  rtms <- list(rasterToMatch_extendedLandscape, rasterToMatch_extendedLandscapeBig)
-  names(rtms)  <- c("window30", 'agg500') 
-  rtmsDigest <- .robustDigest(rtms)
-  mod$historicLand <- Map(rtmname = names(rtms), rtm = rtms, rtmDigest = rtmsDigest, function(rtm, rtmname, rtmDigest) {
-     
-       Map(ii=P(sim)$historicLandYears, function(ii){
-         reproducible::prepInputs(
-           url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
-           destinationPath = dPath, # end pre process
-           fun = make_landforest_prop_spades(targetFile = targetFile, 
-                                             buff = P(sim)$buffer, where2save = dataPath(sim)),
-           to = rtm,
-           method = 'near', 
-           writeTo = '') |>
-           Cache(omitArgs = "to", .cacheExtra = rtmDigest)
-       })
-       # historicLand[[P(sim)$historicLandYears[[ii]]]] <- reproducible::prepInputs(
-       #   url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", P(sim)$historicLandYears[[ii]], ".zip"),
-       #   destinationPath = dPath, # end pre process
-       #   fun = make_landforest_prop_spades(targetFile = targetFile, 
-       #                                     buff = P(sim)$buffer, where2save = dataPath(sim)),
-       #   to = rtm,
-       #   method = 'near', 
-       #   writeTo = '') |>
-       #   Cache()
-     
-     
-   })|>
-    Cache()
-  
-  
-  for(rtm in list(rasterToMatch_extendedLandscape, rasterToMatch_extendedLandscapeBig))
-  {}
-  # second loop for diff res
-  
-  make_landforest_prop_spades(landYearsStack = mod$historicLandYears, crs, 
-                              buff = P(sim)$buffer, where2save = dataPath(sim))
-  
-  
-  
-  return(sim)
+      plotFun(sim) # example of a plotting function
+      # schedule future event(s)
+
+      # e.g.,
+      #sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval, "prepLandscape", "plot")
+
+      # ! ----- STOP EDITING ----- ! #
+    },
+    save = {
+      # ! ----- EDIT BELOW ----- ! #
+      # do stuff for this event
+
+      # e.g., call your custom functions/methods here
+      # you can define your own methods below this `doEvent` function
+
+      # schedule future event(s)
+
+      # e.g.,
+      # sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval, "prepLandscape", "save")
+
+      # ! ----- STOP EDITING ----- ! #
+    },
+    event1 = {
+      # ! ----- EDIT BELOW ----- ! #
+      # do stuff for this event
+
+      # e.g., call your custom functions/methods here
+      # you can define your own methods below this `doEvent` function
+
+      # schedule future event(s)
+
+      # e.g.,
+      # sim <- scheduleEvent(sim, time(sim) + increment, "prepLandscape", "templateEvent")
+
+      # ! ----- STOP EDITING ----- ! #
+    },
+    event2 = {
+      # ! ----- EDIT BELOW ----- ! #
+      # do stuff for this event
+
+      # e.g., call your custom functions/methods here
+      # you can define your own methods below this `doEvent` function
+
+      # schedule future event(s)
+
+      # e.g.,
+      # sim <- scheduleEvent(sim, time(sim) + increment, "prepLandscape", "templateEvent")
+
+      # ! ----- STOP EDITING ----- ! #
+    },
+    warning(noEventWarning(sim))
+  )
+  return(invisible(sim))
 }
 
 ### template initialization
@@ -182,8 +237,8 @@ Event2 <- function(sim) {
   #   sim$map <- Cache(prepInputs, extractURL('map')) # download, extract, load file from url in sourceURL
   # }
 
-  cacheTags <- c(currentModule(sim), "function:.inputObjects") ## uncomment this if Cache is being used
-  dPath <- asPath(getOption("reproducible.destinationPath", inputPath(sim)), 1)
+  #cacheTags <- c(currentModule(sim), "function:.inputObjects") ## uncomment this if Cache is being used
+  dPath <- asPath(getOption("reproducible.destinationPath", dataPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   # ! ----- EDIT BELOW ----- ! #
