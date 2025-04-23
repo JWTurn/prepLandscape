@@ -80,11 +80,7 @@ make_landforest_prop <- function(studyArea, crs, buff, startyr, endyr){
     propmixed <- focal(mixed, Buff, na.rm = TRUE, pad = TRUE, padValue = 0)
     
     
-    propLand <- c(propwater, propsnow, proprock, propbarren, propbryoids, propshrub,
-                  propwet, propwettreed, propherbs, propneedle, propdecid, propmixed)
-    names(propLand) <- c(prop_water, prop_snow, prop_rock, prop_barrenland, prop_bryoids, 
-                         prop_shrub, prop_wetland, prop_wet_treed, prop_herbs, 
-                         prop_needleleaf, prop_deciduous, prop_mixed)
+   
     
     # # paths
     # p.water <- file.path('data', 'raw-data', 'prop_land',

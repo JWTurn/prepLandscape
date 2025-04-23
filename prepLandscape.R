@@ -72,15 +72,41 @@ doEvent.prepLandscape.init <- function(sim, eventTime, eventType, priority) {
     Cache()
   sim$historicHarv[sim$historicHarv==0]<-NA
   
-  for (ii in P(sim)$historicLandYears) {
-    mod$historicLand[[P(sim)$historicLandYears[[ii]]]] <- reproducible::prepInputs(
-      url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", P(sim)$historicLandYears[[ii]], ".zip"),
-      destinationPath = dPath,
-      to = rasterToMatch_extendedLandscape,
-      method = 'near', # does this work? not sure how to specify
-      fun = 'terra::rast') |>
-      Cache()
-  }
+  # set these in setupProj
+  rtms <- list(rasterToMatch_extendedLandscape, rasterToMatch_extendedLandscapeBig)
+  names(rtms)  <- c("window30", 'agg500') 
+  rtmsDigest <- .robustDigest(rtms)
+  mod$historicLand <- Map(rtmname = names(rtms), rtm = rtms, rtmDigest = rtmsDigest, function(rtm, rtmname, rtmDigest) {
+     
+       Map(ii=P(sim)$historicLandYears, function(ii){
+         reproducible::prepInputs(
+           url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
+           destinationPath = dPath, # end pre process
+           fun = make_landforest_prop_spades(targetFile = targetFile, 
+                                             buff = P(sim)$buffer, where2save = dataPath(sim)),
+           to = rtm,
+           method = 'near', 
+           writeTo = '') |>
+           Cache(omitArgs = "to", .cacheExtra = rtmDigest)
+       })
+       # historicLand[[P(sim)$historicLandYears[[ii]]]] <- reproducible::prepInputs(
+       #   url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", P(sim)$historicLandYears[[ii]], ".zip"),
+       #   destinationPath = dPath, # end pre process
+       #   fun = make_landforest_prop_spades(targetFile = targetFile, 
+       #                                     buff = P(sim)$buffer, where2save = dataPath(sim)),
+       #   to = rtm,
+       #   method = 'near', 
+       #   writeTo = '') |>
+       #   Cache()
+     
+     
+   })|>
+    Cache()
+  
+  
+  for(rtm in list(rasterToMatch_extendedLandscape, rasterToMatch_extendedLandscapeBig))
+  {}
+  # second loop for diff res
   
   make_landforest_prop_spades(landYearsStack = mod$historicLandYears, crs, 
                               buff = P(sim)$buffer, where2save = dataPath(sim))

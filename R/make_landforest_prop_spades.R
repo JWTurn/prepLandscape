@@ -2,12 +2,13 @@
 #' @export
 #' @author Julie W. Turner
 #' 
-make_landforest_prop <- function(landYearsStack, crs, buff, startyr = NULL, endyr = NULL, where2save){
-  if(is.null(startyr)&is.null(endyr)){
-    yrs <- names(landYearsStack)
-  } else {
-    yrs <- startyr:endyr
-  }
+make_landforest_prop <- function(targetFile, crs, buff, startyr = NULL, endyr = NULL, where2save){
+  landYear <- terra::rast(targetFile)
+  # if(is.null(startyr)&is.null(endyr)){
+  #   yrs <- names(landYearsStack)
+  # } else {
+  #   yrs <- startyr:endyr
+  # }
   
   # TODO this is inelegant -> fix
   # ls_loc <- c(file.path(canada, 'Landcover_1984-2022', paste0('CA_forest_VLCE2_', yrs), 
@@ -37,6 +38,8 @@ make_landforest_prop <- function(landYearsStack, crs, buff, startyr = NULL, endy
     # Since it's all 1s and 0s, this is the same as the proportion of wetland surrounding the focal variable
     
     
+    terra::segregate() #creates 1 file with diff layers, then focal on whole thing
+
     # pull just water and name it
     water <- land == 20
     names(water) <- "water"
@@ -148,6 +151,13 @@ make_landforest_prop <- function(landYearsStack, crs, buff, startyr = NULL, endy
     writeRaster(propmixed, p.mixed)
     print('mixed')
     print(paste0('finished ', yrs[[rr]]))
+    
+    propLand <- c(propwater, propsnow, proprock, propbarren, propbryoids, propshrub,
+                  propwet, propwettreed, propherbs, propneedle, propdecid, propmixed)
+    names(propLand) <- c(prop_water, prop_snow, prop_rock, prop_barrenland, prop_bryoids, 
+                         prop_shrub, prop_wetland, prop_wet_treed, prop_herbs, 
+                         prop_needleleaf, prop_deciduous, prop_mixed)
+    return(propLand)
     
   }
     
