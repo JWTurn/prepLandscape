@@ -2,7 +2,7 @@
 #' @export
 #' @author Julie W. Turner
 #' 
-make_landforest_prop_spades <- function(targetFile, buff, where2save){
+make_landforest_prop_spades <- function(targetFile, buff){
   land <- terra::rast(targetFile)
   
  
