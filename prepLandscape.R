@@ -79,23 +79,23 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       # TODO set these in setupProj
       rtms <- list(rasterToMatch_extendedLandscape30m, rasterToMatch_extendedLandscape500m)
       names(rtms)  <- c("window30", 'agg500') 
-      rtmsFuns <- c(paste0('make_landforest_prop_spades(targetFile = targetFile, buff = ',
+      rtmsFuns <- c(paste0('make_landforest_prop_spades(targetFile = targetFile, trast = rtm, buff = ',
                           P(sim)$buffer,', where2save = dataPath(sim))'),
-                   paste('aggregate_landforest_spades(targetFile = targetFile', 
+                   paste('aggregate_landforest_spades(targetFile = targetFile, trast = rtm', 
                                ', where2save = dataPath(sim))'))
-      rtmsDigest <- .robustDigest(rtms)
+      #rtmsDigest <- .robustDigest(rtms)
       mod$historicLand <- Map(rtmname = names(rtms), rtm = rtms, 
-                              rtmDigest = rtmsDigest, rtmFun = rtmsFuns, function(rtm, rtmname, rtmDigest, rtmFun) {
+                              rtmDigest = rtmsDigest, rtmFun = rtmsFuns, function(rtm, rtmname, rtmFun) {
         
         Map(ii=P(sim)$historicLandYears, function(ii){
           reproducible::prepInputs(
             url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
             destinationPath = dPath, # end pre process
             fun = rtmFun, # end process?
-            to = rtm,
-            method = 'near', 
+            # to = rtm,
+            # method = 'near', 
             writeTo = file.path(dataPath(sim), paste0('propLand_', rtmname, '_', ii, '.tif'))) |> ## TODO set name
-            Cache(omitArgs = "to", .cacheExtra = rtmDigest)
+            Cache()
         })
         # historicLand[[P(sim)$historicLandYears[[ii]]]] <- reproducible::prepInputs(
         #   url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", P(sim)$historicLandYears[[ii]], ".zip"),
