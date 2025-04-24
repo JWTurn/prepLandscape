@@ -2,8 +2,9 @@
 #' @export
 #' @author Julie W. Turner
 #' 
-make_landforest_prop_spades <- function(targetFile, buff){
-  land <- terra::rast(targetFile)
+make_landforest_prop_spades <- function(targetFile, trast, buff, where2save = NULL){
+  landRaw <- terra::rast(targetFile)
+  land <- postProcess(landRaw, to = trast, method = 'near')
   
  
    # What to buffer for proportion of landclasses
@@ -20,9 +21,13 @@ make_landforest_prop_spades <- function(targetFile, buff){
     land.seg <- terra::segregate(land) #creates 1 file with diff layers, then focal on whole thing
 
     propLand <- focal(land.seg, Buff, na.rm = TRUE, pad = TRUE, padValue = 0)
+    
     names(propLand) <- c(prop_water, prop_snow, prop_rock, prop_barrenland, prop_bryoids, 
                          prop_shrub, prop_wetland, prop_wet_treed, prop_herbs, 
                          prop_needleleaf, prop_deciduous, prop_mixed)
+    if(!is.null(where2save)){
+      writeRaster(propLand, where2save)
+    }
     
     return(propLand)
     
