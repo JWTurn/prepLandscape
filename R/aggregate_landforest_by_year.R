@@ -3,7 +3,7 @@
 #' @author Julie W. Turner
 
 
-aggregate_landforest <- function(path, trast, startyr, endyr, crs, where2save){
+aggregate_landforest_by_year <- function(path, trast, startyr, endyr, crs, where2save){
   yrs <- startyr:endyr
   ls_loc <- c(file.path(path, paste0('CA_forest_VLCE2_', yrs), 
                         paste0('CA_forest_VLCE2_', yrs, '.tif')))

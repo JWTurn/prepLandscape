@@ -2,7 +2,7 @@
 #' @export
 #' @author Julie W. Turner
 #' 
-make_landforest_prop <- function(landYearsStack, studyArea, crs, buff, startyr, endyr, where2save){
+make_landforest_prop_by_year <- function(landYearsStack, studyArea, crs, buff, startyr, endyr, where2save){
   if(is.null(startyr)&is.null(endyr)){
     yrs <- names(landYearsStack)
   } else {
