@@ -19,7 +19,7 @@ aggregate_landforest <- function(targetFile, trast, where2save = NULL){
     Cache()
   
   
-  names(propLand) <- c('prop_water', 'prop_snow', 'prop_rock', 'prop_barrenland', 'prop_bryoids', 
+  names(land.agg) <- c('prop_water', 'prop_snow', 'prop_rock', 'prop_barrenland', 'prop_bryoids', 
                        'prop_shrub', 'prop_wetland', 'prop_wet_treed', 'prop_herbs', 
                        'prop_needleleaf', 'prop_deciduous', 'prop_mixed')
   if(!is.null(where2save)){
