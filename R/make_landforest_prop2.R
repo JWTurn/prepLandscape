@@ -2,7 +2,7 @@
 #' @export
 #' @author Julie W. Turner
 #' 
-make_landforest_prop <- function(studyArea, crs, buff, startyr, endyr){
+make_landforest_prop2 <- function(studyArea, crs, buff, startyr, endyr){
   yrs <- startyr:endyr
   # TODO this is inelegant -> fix
   ls_loc <- c(file.path(canada, 'Landcover_1984-2019', paste0('CA_forest_VLCE2_', yrs), 
