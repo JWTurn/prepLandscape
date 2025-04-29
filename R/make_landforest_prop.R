@@ -31,6 +31,7 @@ make_landforest_prop <- function(targetFile, trast, buff, where2save = NULL){
   names(propLand) <- c('prop_water', 'prop_snow', 'prop_rock', 'prop_barrenland', 'prop_bryoids', 
                        'prop_shrub', 'prop_wetland', 'prop_wet_treed', 'prop_herbs', 
                        'prop_needleleaf', 'prop_deciduous', 'prop_mixed')
+  
   if(!is.null(where2save)){
     writeRaster(propLand, where2save, overwrite = T)
   }

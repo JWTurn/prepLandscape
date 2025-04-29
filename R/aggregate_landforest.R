@@ -15,7 +15,7 @@ aggregate_landforest <- function(targetFile, trast, where2save = NULL){
   
   land.seg <- terra::segregate(landCrop, classes = lccClasses) #creates 1 file with diff layers, then focal on whole thing
   
-  land.agg <- postProcess(landRaw, to = trast, method = 'average')# |>
+  land.agg <- postProcess(land.seg, to = trast, method = 'average')# |>
   #Cache()
   
   
