@@ -93,6 +93,7 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
             url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
             destinationPath = dPath, # end pre process
             fun = rtmFun, # end process
+            rtm = rtm, 
             writeTo = file.path(dataPath(sim), paste0('propLand_', rtmname, '_', ii, '.tif'))) |> ## TODO set name
             Cache()
         })
