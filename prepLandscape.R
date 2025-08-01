@@ -19,10 +19,17 @@ defineModule(sim, list(
   parameters = bindrows(
     defineParameter("historicLandYears", "integer", 2010:2023, NA, NA,
                     paste0("This is the year range we use historic (not simulated) landscape layers.")),
-    defineParameter("harvURL", "integer", "https://opendata.nfis.org/downloads/forest_change/CA_Forest_Harvest_1985-2020.zip", NA, NA,
+    defineParameter("harvNTEMS", "character", "https://opendata.nfis.org/downloads/forest_change/CA_Forest_Harvest_1985-2020.zip", NA, NA,
                     paste0("This is the year the initial disturbance layers are from", 
                            "and used for time since variables.",
                            "This parameter would need to be updated if use a different year of data.")),
+    
+    defineParameter("canLadDisturbYear", "character", "https://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada_disturbances_1965to1984/v1/canlad_1965_1984_disturbanceYear.tif", NA, NA,
+                    paste0("CanLaD disturbance year layer", 
+                           "and used for time since variables.")),
+    defineParameter("canLadDisturbType", "character", "https://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada_disturbances_1965to1984/v1/canlad_1965_1984_disturbanceType.tif", NA, NA,
+                    paste0("CanLaD disturbance type layer", 
+                           "and used for time since variables.")),
     
     #defineParameter("paramName", "paramClass", value, min, max, "parameter description"),
     defineParameter(".plots", "character", "screen", NA, NA,
@@ -69,12 +76,16 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       cacheTags <- c(currentModule(sim), "function:.inputObjects") 
       dPath <- asPath(getOption("reproducible.destinationPath", inputPath(sim)), 1)
       
-      sim$historicHarv <- reproducible::prepInputs(url = harvURL,
+      # load disturbances
+      #canLaD <- 
+      historicHarvNTEMS <- reproducible::prepInputs(url = harvNTEMS,
                                                    destinationPath = dPath,
                                                    to = rasterToMatch_extendedLandscape, 
                                                    fun = 'terra::rast') |>
         Cache()
-      sim$historicHarv[sim$historicHarv==0]<-NA
+      historicHarvNTEMS[historicHarvNTEMS==0]<-NA
+      
+      
       
       # TODO set these in setupProj
       rtms <- list(rasterToMatch_extendedLandscape30m, rasterToMatch_extendedLandscape500m)
@@ -97,16 +108,6 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
             writeTo = file.path(dataPath(sim), paste0('propLand_', rtmname, '_', ii, '.tif'))) |> ## TODO set name
             Cache()
         })
-        # historicLand[[P(sim)$historicLandYears[[ii]]]] <- reproducible::prepInputs(
-        #   url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", P(sim)$historicLandYears[[ii]], ".zip"),
-        #   destinationPath = dPath, # end pre process
-        #   fun = make_landforest_prop_spades(targetFile = targetFile, 
-        #                                     buff = P(sim)$buffer, where2save = dataPath(sim)),
-        #   to = rtm,
-        #   method = 'near', 
-        #   writeTo = '') |>
-        #   Cache()
-        
         
       })|>
         Cache()
