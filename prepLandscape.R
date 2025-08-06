@@ -54,9 +54,18 @@ defineModule(sim, list(
   inputObjects = bindrows(
     #expectsInput("objectName", "objectClass", "input object description", sourceURL, ...),
     #expectsInput(objectName = NA, objectClass = NA, desc = NA, sourceURL = NA)
-    expectsInput(objectName = 'harvURL', objectClass = 'SpatRaster', 
+    expectsInput(objectName = 'studyArea', objectClass = 'SpatVector', 
+                 desc = 'Study area of telemetry data + herd areas', 
+                 sourceURL = 'https://drive.google.com/file/d/1XduunieEoZLcNPQphGXnKG7Ql9MF1bme/view?usp=share_link'),
+    
+    expectsInput(objectName = 'harvNTEMS', objectClass = 'SpatRaster', 
                  desc = 'harvest history', 
                  sourceURL = "https://opendata.nfis.org/downloads/forest_change/CA_Forest_Harvest_1985-2020.zip"),
+    
+    expectsInput("rasterToMatch_extendedLandscape30m", "SpatRaster",
+                 desc = paste("A raster to match of the study area plus larger buffer.")),
+    expectsInput("rasterToMatch_extendedLandscape500m", "SpatRaster",
+                 desc = paste("A coarser raster to match of the study area plus large bufferto caluculate proportions of landcover."))
     
   ),
   outputObjects = bindrows(
@@ -78,13 +87,9 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       
       # load disturbances
       #canLaD <- 
-      historicHarvNTEMS <- reproducible::prepInputs(url = harvNTEMS,
-                                                   destinationPath = dPath,
-                                                   to = rasterToMatch_extendedLandscape, 
-                                                   fun = 'terra::rast') |>
-        Cache()
-      historicHarvNTEMS[historicHarvNTEMS==0]<-NA
+      sim$harvNTEMS[sim$harvNTEMS==0]<-NA
       
+      disturbCanLadOldHarvYear <- mask(sim$disturbCanLadOldYear, match(sim$disturbCanLadOldType, 3))
       
       
       # TODO set these in setupProj
@@ -247,6 +252,44 @@ Event2 <- function(sim) {
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
 
   # ! ----- EDIT BELOW ----- ! #
+  # TODO give a smaller area
+  if (!suppliedElsewhere("studyArea_4maps", sim)){
+    sim$studyArea <- Cache(prepInputs,
+                                 url = extractURL("studyArea"),
+                                 destinationPath = dataPath(sim),
+                                 targetFile = "studyArea_bcnwt_4sims.shp",  
+                                 alsoExtract = "similar", fun = "terra::vect")
+  }
+  
+  if (!suppliedElsewhere("rasterToMatch_extendedLandscapeFine", sim)){
+    sim$rasterToMatch_extendedLandscapeFine <- terra::rast(studyArea, res = c(30, 30), vals = 1)
+  }
+  
+  # TODO need to update this, it's not actually 500m
+  if (!suppliedElsewhere("rasterToMatch_extendedLandscapeCoarse", sim)){
+    sim$rasterToMatch_extendedLandscapeCoarse <- terra::aggregate(sim$rasterToMatch, fact = 16)
+  }
+  
+  
+    sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMS"),
+                                              destinationPath = dPath,
+                                              to = rasterToMatch_extendedLandscapeFine, 
+                                              fun = 'terra::rast') |>
+      Cache()
+  
+    sim$disturbCanLadOldType <- prepInputs(url = 'https://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada_disturbances_1965to1984/v1/canlad_1965_1984_disturbanceType.tif',
+                                       destinationPath = dPath,
+                                       alsoExtract = "similar", fun = "terra::rast",
+                                       to = rasterToMatch_extendedLandscapeFine,
+                                       method = 'near') |>
+      Cache()
+   
+    sim$disturbCanLadOldYear <- prepInputs(url = 'https://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada_disturbances_1965to1984/v1/canlad_1965_1984_disturbanceYear.tif',
+                                       destinationPath = dPath,
+                                       alsoExtract = "similar", fun = "terra::rast",
+                                       to = rasterToMatch_extendedLandscapeFine,
+                                       method = 'near') |>
+      Cache()
 
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
