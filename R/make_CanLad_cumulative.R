@@ -1,7 +1,7 @@
 #' @title make cumulative CanLaD disturbance per year per disturbance type
 #' @export
 #' @author Julie W. Turner
-makeCanLadCumulative <- function(yrs, disturbTypeCode, dPath, rtm){
+make_CanLad_cumulative <- function(yrs, disturbTypeCode, dPath, rtm){
   # make a list of the new harvests, make a spatRasterCollection, and mosaic
   mosaic(sprc(
     Map(yr = yrs, disturbType = disturbTypeCode, function(yr, disturbType){
