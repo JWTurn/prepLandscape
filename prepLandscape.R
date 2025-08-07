@@ -62,9 +62,9 @@ defineModule(sim, list(
                  desc = 'harvest history', 
                  sourceURL = "https://opendata.nfis.org/downloads/forest_change/CA_Forest_Harvest_1985-2020.zip"),
     
-    expectsInput("rasterToMatch_extendedLandscape30m", "SpatRaster",
+    expectsInput("rasterToMatch_extendedLandscapeFine", "SpatRaster",
                  desc = paste("A raster to match of the study area plus larger buffer.")),
-    expectsInput("rasterToMatch_extendedLandscape500m", "SpatRaster",
+    expectsInput("rasterToMatch_extendedLandscapeCoarse", "SpatRaster",
                  desc = paste("A coarser raster to match of the study area plus large bufferto caluculate proportions of landcover."))
     
   ),
@@ -86,14 +86,28 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       dPath <- asPath(getOption("reproducible.destinationPath", inputPath(sim)), 1)
       
       # load disturbances
-      #canLaD <- 
+      ##### HARVEST -----
       sim$harvNTEMS[sim$harvNTEMS==0]<-NA
       
+      # get before 1985 harvest from CanLaD -- get year only for harv
       disturbCanLadOldHarvYear <- mask(sim$disturbCanLadOldYear, match(sim$disturbCanLadOldType, 3))
+      
+      # add recent harvest after NTEMS
+      newYears <- (max(values(sim$harvNTEMs), na.rm = T)+1) : max(P(sim)$historicLandYears)
+      
+      newHarvRast <- make_CanLad_cumulative(yrs = newYears, disturbTypeCode = 2, 
+                                            dPath = dPath, rtm = sim$rasterToMatch_extendedLandscapeFine) |>
+        Cache()
+      
+      # combine all types together
+      sim$harv <- c(disturbCanLadOldHarvYear, sim$harvNTEMS, newHarvRast)
+      names(sim$harv) <- c('CanLadOld', 'NTEMS', 'CanLadNew')
+      
+      
       
       
       # TODO set these in setupProj
-      rtms <- list(rasterToMatch_extendedLandscape30m, rasterToMatch_extendedLandscape500m)
+      rtms <- list(rasterToMatch_extendedLandscapeFine, rasterToMatch_extendedLandscapeCoarse)
       names(rtms)  <- c("window30", 'agg500') 
       rtmsFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
                           P(sim)$buffer,', where2save = dataPath(sim))'),
