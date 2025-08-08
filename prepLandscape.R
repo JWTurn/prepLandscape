@@ -15,7 +15,7 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("NEWS.md", "README.md", "prepLandscape.Rmd"),
-  reqdPkgs = list("SpaDES.core (>= 2.1.5.9002)", "ggplot2", "terra", "sf"),
+  reqdPkgs = list("SpaDES.core (>= 2.1.5.9002)", "ggplot2", "terra", "sf", 'stringr'),
   parameters = bindrows(
     defineParameter("historicLandYears", "integer", 2010:2023, NA, NA,
                     paste0("This is the year range we use historic (not simulated) landscape layers.")),
@@ -58,9 +58,25 @@ defineModule(sim, list(
                  desc = 'Study area of telemetry data + herd areas', 
                  sourceURL = 'https://drive.google.com/file/d/1XduunieEoZLcNPQphGXnKG7Ql9MF1bme/view?usp=share_link'),
     
-    expectsInput(objectName = 'harvNTEMS', objectClass = 'SpatRaster', 
+    expectsInput(objectName = 'harvNTEMSurl', objectClass = 'SpatRaster', 
                  desc = 'harvest history', 
                  sourceURL = "https://opendata.nfis.org/downloads/forest_change/CA_Forest_Harvest_1985-2020.zip"),
+    
+    expectsInput(objectName = 'CanLadOldTypeURL', objectClass = 'SpatRaster', 
+                 desc = 'CanLad disturbance type data before 1985', 
+                 sourceURL = 'https://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada_disturbances_1965to1984/v1/canlad_1965_1984_disturbanceType.tif'),
+    
+    expectsInput(objectName = 'CanLadOldYearURL', objectClass = 'SpatRaster', 
+                 desc = 'CanLad disturbance year data before 1985', 
+                 sourceURL = 'https://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada_disturbances_1965to1984/v1/canlad_1965_1984_disturbanceYear.tif'),
+    
+    expectsInput(objectName = 'nfdbURL', objectClass = 'SpatVector', 
+                 desc = 'National Fire Data Base (NFDB) for back filling NBAC', 
+                 sourceURL = 'https://cwfis.cfs.nrcan.gc.ca/downloads/nfdb/fire_poly/current_version/NFDB_poly.zip'),
+    
+    expectsInput(objectName = 'nbacURL', objectClass = 'SpatVector', 
+                 desc = 'National Burn Area Composite', 
+                 sourceURL = 'https://cwfis.cfs.nrcan.gc.ca/downloads/nbac/NBAC_1972to2024_20250506_shp.zip'),
     
     expectsInput("rasterToMatch_extendedLandscapeFine", "SpatRaster",
                  desc = paste("A raster to match of the study area plus larger buffer.")),
@@ -224,27 +240,7 @@ plotFun <- function(sim) {
   return(invisible(sim))
 }
 
-### template for your event1
-Event1 <- function(sim) {
-  # ! ----- EDIT BELOW ----- ! #
-  # THE NEXT TWO LINES ARE FOR DUMMY UNIT TESTS; CHANGE OR DELETE THEM.
-  # sim$event1Test1 <- " this is test for event 1. " # for dummy unit test
-  # sim$event1Test2 <- 999 # for dummy unit test
 
-  # ! ----- STOP EDITING ----- ! #
-  return(invisible(sim))
-}
-
-### template for your event2
-Event2 <- function(sim) {
-  # ! ----- EDIT BELOW ----- ! #
-  # THE NEXT TWO LINES ARE FOR DUMMY UNIT TESTS; CHANGE OR DELETE THEM.
-  # sim$event2Test1 <- " this is test for event 2. " # for dummy unit test
-  # sim$event2Test2 <- 777  # for dummy unit test
-
-  # ! ----- STOP EDITING ----- ! #
-  return(invisible(sim))
-}
 
 .inputObjects <- function(sim) {
   # Any code written here will be run during the simInit for the purpose of creating
@@ -267,8 +263,8 @@ Event2 <- function(sim) {
 
   # ! ----- EDIT BELOW ----- ! #
   # TODO give a smaller area
-  if (!suppliedElsewhere("studyArea_4maps", sim)){
-    sim$studyArea <- Cache(prepInputs,
+  if (!suppliedElsewhere("studyArea_extendedLandscape", sim)){
+    sim$studyArea_extendedLandscape <- Cache(prepInputs,
                                  url = extractURL("studyArea"),
                                  destinationPath = dataPath(sim),
                                  targetFile = "studyArea_bcnwt_4sims.shp",  
@@ -279,30 +275,36 @@ Event2 <- function(sim) {
     sim$rasterToMatch_extendedLandscapeFine <- terra::rast(studyArea, res = c(30, 30), vals = 1)
   }
   
-  # TODO need to update this, it's not actually 500m
+  
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeCoarse", sim)){
     sim$rasterToMatch_extendedLandscapeCoarse <- terra::aggregate(sim$rasterToMatch, fact = 16)
   }
   
   
-    sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMS"),
+    sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMSurl"),
                                               destinationPath = dPath,
-                                              to = rasterToMatch_extendedLandscapeFine, 
+                                              to = sim$rasterToMatch_extendedLandscapeFine, 
                                               fun = 'terra::rast') |>
       Cache()
   
-    sim$disturbCanLadOldType <- prepInputs(url = 'https://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada_disturbances_1965to1984/v1/canlad_1965_1984_disturbanceType.tif',
+    sim$disturbCanLadOldType <- prepInputs(url = extractURL('CanLadOldTypeURL'),
                                        destinationPath = dPath,
                                        alsoExtract = "similar", fun = "terra::rast",
-                                       to = rasterToMatch_extendedLandscapeFine,
+                                       to = sim$rasterToMatch_extendedLandscapeFine,
                                        method = 'near') |>
       Cache()
    
-    sim$disturbCanLadOldYear <- prepInputs(url = 'https://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada_disturbances_1965to1984/v1/canlad_1965_1984_disturbanceYear.tif',
+    sim$disturbCanLadOldYear <- prepInputs(url = extractURL('CanLadOldYearURL'), 
                                        destinationPath = dPath,
                                        alsoExtract = "similar", fun = "terra::rast",
-                                       to = rasterToMatch_extendedLandscapeFine,
+                                       to = sim$rasterToMatch_extendedLandscapeFine,
                                        method = 'near') |>
+      Cache()
+    
+    
+    sim$fires <- combine_fire_DB(nbacURL = 'nbacURL', nfdbURL = 'nfdbURL', dPath, 
+                                 sim$studyArea_extendedLandscape, 
+                                 savePath = dataPath(sim)) |>
       Cache()
 
   # ! ----- STOP EDITING ----- ! #
