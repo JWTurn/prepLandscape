@@ -14,7 +14,7 @@ combine_fire_DB <- function(nbacURL, nfdbURL, dPath, studyArea, savePath = NULL)
                      targetFile = "NFDB_poly_20210707.shp",  
                      alsoExtract = "similar", fun = "terra::vect",
                      to = studyArea)
-  # filter older to those prio to NBAC
+  # filter older to those prior to NBAC
   nfdb.pre <- subset(nfdb, nfdb$YEAR < min(nbac$YEAR, na.rm = T))
   
   #combine fires
