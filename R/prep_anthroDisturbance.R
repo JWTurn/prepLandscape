@@ -3,7 +3,7 @@
 #' @author Julie W. Turner
 
 
-prep_anthroDisturbance <- function(inputsPath, studyArea, dataPath, source = 'ECCC', .studyArea = NULL) {
+prep_anthroDisturbance <- function(inputsPath, studyArea, dataPath, source = 'ECCC', studyAreaName = NULL) {
   ### ECCC disturbance ----
   if(source == 'ECCC'){
     eccc_lines_2010 <- prepInputs(url = 'https://drive.google.com/file/d/1kgIUXuseEfiyv8tEWnAlWdRZkeIhQrwa/view?usp=share_link',
@@ -104,15 +104,15 @@ prep_anthroDisturbance <- function(inputsPath, studyArea, dataPath, source = 'EC
     # gather yearly disturbances
     disturbances2010 <- c(roads_2010, notroads_2010, disturb_2010)
     names(disturbances2010) <- c('paved', 'unpaved', 'polys')
-    writeVector(disturbances2010, file.path(dataPath, paste0(.studyArea, '_2010.shp')))
+    writeVector(disturbances2010, file.path(dataPath, paste0(studyAreaName, '_2010.shp')))
     
     disturbances2015 <- c(roads_2015_merge, notroads_2015_merge, disturb_2015_merge)
     names(disturbances2015) <- c('paved', 'unpaved', 'polys')
-    writeVector(disturbances2015, file.path(dataPath, paste0(.studyArea, '_2015.shp')))
+    writeVector(disturbances2015, file.path(dataPath, paste0(studyAreaName, '_2015.shp')))
     
     disturbances2020 <- c(roads_2020_merge, notroads_2020_merge, disturb_2020_merge)
     names(disturbances2020) <- c('paved', 'unpaved', 'polys')
-    writeVector(disturbances2020, file.path(dataPath, paste0(.studyArea, '_2020.shp')))
+    writeVector(disturbances2020, file.path(dataPath, paste0(studyAreaName, '_2020.shp')))
     
     disturbances <- list('2010' = disturbances2010, '2015' = disturbances2015, '2020' = disturbances2020)
     
