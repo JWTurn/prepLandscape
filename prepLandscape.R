@@ -17,8 +17,10 @@ defineModule(sim, list(
   documentation = list("NEWS.md", "README.md", "prepLandscape.Rmd"),
   reqdPkgs = list("SpaDES.core (>= 2.1.5.9002)", "ggplot2", "terra", "sf", 'stringr'),
   parameters = bindrows(
-    defineParameter("historicLandYears", "integer", 2010:2023, NA, NA,
-                    paste0("This is the year range we use historic (not simulated) landscape layers.")),
+    defineParameter("histLandYears", "integer", 2010:2023, NA, NA,
+                    paste0("This is the year range we use past (not simulated) landscape layers.")),
+    defineParameter("backgroundYr", "integer", 1900, NA, NA,
+                    paste0("This is the year we fill fire and harvest rasters for time since calculations.")),
     
     
     
@@ -85,7 +87,7 @@ defineModule(sim, list(
   outputObjects = bindrows(
     #createsOutput("objectName", "objectClass", "output object description", ...),
     #createsOutput(objectName = NA, objectClass = NA, desc = NA)
-    createsOutput(objectName = 'historicHarv', objectClass = 'spatRaster', 
+    createsOutput(objectName = 'histHarv', objectClass = 'spatRaster', 
                   desc = 'spatRaster of historic harvest within extended study area')
   )
 ))
@@ -100,6 +102,11 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       dPath <- asPath(getOption("reproducible.destinationPath", inputPath(sim)), 1)
       
       # load disturbances
+      ##### FIRES ----
+      mod$histFire <- make_timeSinceDisturb_rast(layer = sim$fires, rast = sim$rasterToMatch_extendedLandscapeFine, 
+                                                 disturbanceType = 'Fire', minyr = min(P(sim)$histLandYears), 
+                                                 backgrnd = backgroundYr, where2save = NULL)
+      
       ##### HARVEST -----
       sim$harvNTEMS[sim$harvNTEMS==0]<-NA
       
@@ -107,7 +114,7 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       disturbCanLadOldHarvYear <- mask(sim$disturbCanLadOldYear, match(sim$disturbCanLadOldType, 3))
       
       # add recent harvest after NTEMS
-      newYears <- (max(values(sim$harvNTEMs), na.rm = T)+1) : max(P(sim)$historicLandYears)
+      newYears <- (max(values(sim$harvNTEMs), na.rm = T)+1) : max(P(sim)$histLandYears)
       
       newHarvRast <- make_CanLad_cumulative(yrs = newYears, disturbTypeCode = 2, 
                                             dPath = dPath, rtm = sim$rasterToMatch_extendedLandscapeFine) |>
@@ -129,10 +136,10 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
                                ', where2save = dataPath(sim))'))
       #rtmsDigest <- .robustDigest(rtms)
      # names(P(sim)$historicLandYears) <- P(sim)$historicLandYears
-      mod$historicLand <- Map(rtmname = names(rtms), rtm = rtms, 
+      mod$histLand <- Map(rtmname = names(rtms), rtm = rtms, 
                               rtmDigest = rtmsDigest, rtmFun = rtmsFuns, function(rtm, rtmname, rtmFun) {
         
-        Map(nn = names(P(sim)$historicLandYears), ii=P(sim)$historicLandYears, function(nn,ii){
+        Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
           reproducible::prepInputs(
             url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
             destinationPath = dPath, # end pre process
@@ -145,65 +152,13 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       })|>
         Cache()
       
+      
     
       # schedule future event(s)
       # sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "prepLandscape", "plot")
       # sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "prepLandscape", "save")
     },
-    plot = {
-      # ! ----- EDIT BELOW ----- ! #
-      # do stuff for this event
-
-      plotFun(sim) # example of a plotting function
-      # schedule future event(s)
-
-      # e.g.,
-      #sim <- scheduleEvent(sim, time(sim) + P(sim)$.plotInterval, "prepLandscape", "plot")
-
-      # ! ----- STOP EDITING ----- ! #
-    },
-    save = {
-      # ! ----- EDIT BELOW ----- ! #
-      # do stuff for this event
-
-      # e.g., call your custom functions/methods here
-      # you can define your own methods below this `doEvent` function
-
-      # schedule future event(s)
-
-      # e.g.,
-      # sim <- scheduleEvent(sim, time(sim) + P(sim)$.saveInterval, "prepLandscape", "save")
-
-      # ! ----- STOP EDITING ----- ! #
-    },
-    event1 = {
-      # ! ----- EDIT BELOW ----- ! #
-      # do stuff for this event
-
-      # e.g., call your custom functions/methods here
-      # you can define your own methods below this `doEvent` function
-
-      # schedule future event(s)
-
-      # e.g.,
-      # sim <- scheduleEvent(sim, time(sim) + increment, "prepLandscape", "templateEvent")
-
-      # ! ----- STOP EDITING ----- ! #
-    },
-    event2 = {
-      # ! ----- EDIT BELOW ----- ! #
-      # do stuff for this event
-
-      # e.g., call your custom functions/methods here
-      # you can define your own methods below this `doEvent` function
-
-      # schedule future event(s)
-
-      # e.g.,
-      # sim <- scheduleEvent(sim, time(sim) + increment, "prepLandscape", "templateEvent")
-
-      # ! ----- STOP EDITING ----- ! #
-    },
+    
     warning(noEventWarning(sim))
   )
   return(invisible(sim))
