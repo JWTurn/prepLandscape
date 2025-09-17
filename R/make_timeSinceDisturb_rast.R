@@ -3,7 +3,7 @@
 #' @author Julie W. Turner
 #' 
 #' 
-make_timeSinceDisturb_rast <- function(layer, rast, disturbanceType, minyr = NULL, backgrnd, where2save = NULL){
+make_timeSinceDisturb_rast <- function(layer, rast, disturbanceType, minyr = NULL, backgrndYear = NULL, backgrndTS = NULL, where2save = NULL){
   lyr <- layer
   raster <- rast
   yearsWithData <- unique(lyr[["YEAR"]])$YEAR
@@ -16,8 +16,14 @@ make_timeSinceDisturb_rast <- function(layer, rast, disturbanceType, minyr = NUL
     print(paste0('start ', yrName))
     #fires <- 
     suppressWarnings({
-      historicalRasters <- rasterize(subst, raster, field="YEAR", fun=max, background = backgrnd)
-      timeSince <- yr - mask(historicalRasters, raster)
+      historicalRasters <- rasterize(subst, raster, field="YEAR", fun=max, background = backgrndYear)
+      if(is.null(backgrndTS)){
+        timeSince <- yr - mask(historicalRasters, raster)
+      } else{
+        timeSince1 <- yr - historicalRasters
+        timeSince <- mask(ifel(is.na(timeSince1), backgrndTS, timeSince1), raster)
+      }
+      
       
       names(timeSince) <- paste0('timeSince', disturbanceType)
     })
