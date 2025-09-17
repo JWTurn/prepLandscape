@@ -5,7 +5,7 @@
 make_landforest_prop <- function(targetFile, trast, buff, where2save = NULL){
   
   landRaw <- terra::rast(targetFile)
-  land <- postProcess(landRaw, to = trast, method = 'near')# |>
+  land <- postProcess(landRaw, cropTo=terra::buffer(trast, width = 10000))# |>
   # Cache()
   
   
@@ -25,8 +25,12 @@ make_landforest_prop <- function(targetFile, trast, buff, where2save = NULL){
   
   land.seg <- terra::segregate(land, classes = lccClasses) #creates 1 file with diff layers, then focal on whole thing
   
-  propLand <- focal(land.seg, Buff, na.rm = TRUE, pad = TRUE, padValue = 0)
+  propLandFocal <- focal(land.seg, Buff, na.rm = TRUE, pad = TRUE, padValue = 0)
   
+  
+  propLand <- postProcess(propLandFocal, to = trast, method = 'average')
+  
+ 
   
   names(propLand) <- c('prop_water', 'prop_snow', 'prop_rock', 'prop_barrenland', 'prop_bryoids', 
                        'prop_shrub', 'prop_wetland', 'prop_wet_treed', 'prop_herbs', 
