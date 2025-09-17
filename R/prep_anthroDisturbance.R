@@ -114,7 +114,7 @@ prep_anthroDisturbance <- function(inputsPath, studyArea, dataPath, source = 'EC
     names(disturbances2020) <- c('paved', 'unpaved', 'polys')
     writeVector(disturbances2020, file.path(dataPath, paste0(studyAreaName, '_2020.shp')))
     
-    disturbances <- list('2010' = disturbances2010, '2015' = disturbances2015, '2020' = disturbances2020)
+    disturbances <- list(intYear2010 = disturbances2010, intYear2015 = disturbances2015, intYear2020 = disturbances2020)
     
     return(disturbances)
   }
