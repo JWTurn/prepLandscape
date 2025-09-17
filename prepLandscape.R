@@ -79,9 +79,16 @@ defineModule(sim, list(
                                ' This includes paved/unpaved linear features and other polygonal disturbances.')),
     
     expectsInput("rasterToMatch_extendedLandscapeFine", "SpatRaster",
-                 desc = paste("A raster to match of the study area plus larger buffer.")),
+                 desc = paste("A raster to match of the study area plus larger buffer at finest resolution.")),
+    expectsInput("rasterToMatch_extendedLandscape", "SpatRaster",
+                 desc = paste("A raster to match of the study area plus larger buffer at target forecasting resolution.")),
     expectsInput("rasterToMatch_extendedLandscapeCoarse", "SpatRaster",
-                 desc = paste("A coarser raster to match of the study area plus large bufferto caluculate proportions of landcover."))
+                 desc = paste("A coarser raster to match of the study area plus large bufferto caluculate proportions of landcover.")),
+    expectsInput("rtmFuns", "list",
+                 desc = paste0("List functions to apply to rasters for moving windows or not.",
+                              " Currently only applies to landcover")),
+    expectsInput("rtms", "list",
+                 desc = paste0("List of template rasters. Only 1 if working at one resolution."))
     
   ),
   outputObjects = bindrows(
@@ -124,16 +131,23 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       sim$harv <- c(disturbCanLadOldHarvYear, sim$harvNTEMS, newHarvRast)
       names(sim$harv) <- c('CanLadOld', 'NTEMS', 'CanLadNew')
       
-      
+      timeSinceHarvest <- Map(nn = paste0('year', histLandYears), yr = histLandYears, 
+                      rtm = rasterToMatch_extendedLandscapeFine, background = 100, 
+                      function(nn, yr, rtm, background){
+                        
+                        
+                        harvsYrPos <- clamp(harvs, upper = yr, value = F)
+                        maxRast <- max(harvsYrPos, na.rm = T)
+                        timeSince <- yr - maxRast
+                        timeSinceFill <- mask(ifel(is.na(timeSince), background, timeSince), rtm)
+                        names(timeSinceFill) <- 'timeSinceHarvest'
+                        return(timeSinceFill)
+                      })
       
       
       # TODO set these in setupProj
-      rtms <- list(rasterToMatch_extendedLandscapeFine, rasterToMatch_extendedLandscapeCoarse)
-      names(rtms)  <- c("window30", 'agg500') 
-      rtmsFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
-                          P(sim)$buffer,', where2save = dataPath(sim))'),
-                   paste('aggregate_landforest(targetFile = targetFile, trast = rtm', 
-                               ', where2save = dataPath(sim))'))
+      
+      
       #rtmsDigest <- .robustDigest(rtms)
      # names(P(sim)$historicLandYears) <- P(sim)$historicLandYears
       mod$histLand <- Map(rtmname = names(rtms), rtm = rtms, 
@@ -216,22 +230,40 @@ plotFun <- function(sim) {
 
   # ! ----- EDIT BELOW ----- ! #
   # TODO give a smaller area
+  if (!suppliedElsewhere("studyArea", sim)){
+    sim$studyArea <- prepInputs(url = extractURL("studyArea"),
+                                destinationPath = dataPath(sim),
+                                targetFile = "studyArea_bcnwt_4sims.shp",  
+                                alsoExtract = "similar", fun = "terra::vect") |>
+      Cache()
+  }
+  
   if (!suppliedElsewhere("studyArea_extendedLandscape", sim)){
-    sim$studyArea_extendedLandscape <- Cache(prepInputs,
-                                 url = extractURL("studyArea"),
-                                 destinationPath = dataPath(sim),
-                                 targetFile = "studyArea_bcnwt_4sims.shp",  
-                                 alsoExtract = "similar", fun = "terra::vect")
+    sim$studyArea_extendedLandscape <- terra::buffer(sim$studyArea, 100000)
   }
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeFine", sim)){
-    sim$rasterToMatch_extendedLandscapeFine <- terra::rast(studyArea, res = c(30, 30), vals = 1)
+    sim$rasterToMatch_extendedLandscapeFine <- terra::rast(sim$studyArea_extendedLandscap, res = c(30, 30), vals = 1)
   }
   
+  if (!suppliedElsewhere("rasterToMatch_extendedLandscape", sim)){
+    sim$rasterToMatch_extendedLandscape <- terra::aggregate(sim$rasterToMatch, fact = 6)
+  }
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeCoarse", sim)){
     sim$rasterToMatch_extendedLandscapeCoarse <- terra::aggregate(sim$rasterToMatch, fact = 16)
   }
+  
+  if (!suppliedElsewhere("rtms", sim)){
+    sim$rtms <- list(sim$rasterToMatch_extendedLandscape)
+    names(sim$rtms) <- c('window240')
+  }
+  
+  if (!suppliedElsewhere("rtmFuns", sim)){
+    sim$rtmFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
+                             P(sim)$buffer,', where2save = dataPath(sim))'))
+  }
+  
   
   
     sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMSurl"),
