@@ -110,7 +110,7 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       
       # load disturbances
       ##### FIRES ----
-      mod$histFire <- make_timeSinceDisturb_rast(layer = sim$fires, rast = sim$rasterToMatch_extendedLandscapeFine, 
+      mod$histFire <- make_timeSinceDisturb_rast(layer = sim$fires, rast = sim$rasterToMatch_extendedLandscape, 
                                                  disturbanceType = 'Fire', minyr = min(P(sim)$histLandYears), 
                                                  backgrnd = backgroundYr, where2save = NULL)
       
@@ -124,49 +124,54 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       newYears <- (max(values(sim$harvNTEMs), na.rm = T)+1) : max(P(sim)$histLandYears)
       
       newHarvRast <- make_CanLad_cumulative(yrs = newYears, disturbTypeCode = 2, 
-                                            dPath = dPath, rtm = sim$rasterToMatch_extendedLandscapeFine) |>
+                                            dPath = dPath, rtm = sim$rasterToMatch_extendedLandscape) |>
         Cache()
       
       # combine all types together
-      sim$harv <- c(disturbCanLadOldHarvYear, sim$harvNTEMS, newHarvRast)
-      names(sim$harv) <- c('CanLadOld', 'NTEMS', 'CanLadNew')
+      harvs <- c(disturbCanLadOldHarvYear, sim$harvNTEMS, newHarvRast)
+      names(harvs) <- c('CanLadOld', 'NTEMS', 'CanLadNew')
       
       timeSinceHarvest <- Map(nn = paste0('year', histLandYears), yr = histLandYears, 
-                      rtm = rasterToMatch_extendedLandscapeFine, background = 100, 
+                      rtm = rasterToMatch_extendedLandscape, background = backgroundYr, 
                       function(nn, yr, rtm, background){
                         
                         
                         harvsYrPos <- clamp(harvs, upper = yr, value = F)
                         maxRast <- max(harvsYrPos, na.rm = T)
                         timeSince <- yr - maxRast
-                        timeSinceFill <- mask(ifel(is.na(timeSince), background, timeSince), rtm)
+                        backgrnd <- yr - background
+                        timeSinceFill <- mask(ifel(is.na(timeSince), backgrnd, timeSince), rtm)
                         names(timeSinceFill) <- 'timeSinceHarvest'
                         return(timeSinceFill)
                       })
       
       
-      # TODO set these in setupProj
-      
       
       #rtmsDigest <- .robustDigest(rtms)
      # names(P(sim)$historicLandYears) <- P(sim)$historicLandYears
-      mod$histLand <- Map(rtmname = names(rtms), rtm = rtms, 
-                              rtmDigest = rtmsDigest, rtmFun = rtmsFuns, function(rtm, rtmname, rtmFun) {
+      mod$histLand <- Map(rtmname = names(sim$rtms), rtm = sim$rtms, 
+                              #rtmDigest = rtmsDigest, 
+                          rtmFun = sim$rtmsFuns, function(rtm, rtmname, rtmFun) {
         
         Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
           reproducible::prepInputs(
             url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
             destinationPath = dPath, # end pre process
             fun = rtmFun, # end process
-            rtm = rtm, 
-            writeTo = file.path(dataPath(sim), paste0('propLand_', rtmname, '_', ii, '.tif'))) |> ## TODO set name
+            rtm = rtm) |>
+            #writeTo = file.path(dataPath(sim), paste0('propLand_', rtmname, '_', ii, '.tif'))) |> ## TODO set name
             Cache()
         })
         
       })|>
         Cache()
       
-      
+      sim$landscapeYearly <- Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
+        yearly <- c(mod$histLand[[names(sim$rtms)[[1]]]][[nn]],
+                    timeSinceHarvest[[nn]], mod$histFire[[nn]])
+        writeRaster(yearly, file.path(dataPath(sim), paste0('yearly_', names(sim$rtms)[[1]], '_', ii, '.tif')))
+        return(yearly)
+      })
     
       # schedule future event(s)
       # sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "prepLandscape", "plot")
