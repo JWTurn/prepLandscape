@@ -169,9 +169,10 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       sim$landscapeYearly <- Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
         yearly <- c(mod$histLand[[names(sim$rtms)[[1]]]][[nn]],
                     timeSinceHarvest[[nn]], mod$histFire[[nn]])
-        writeRaster(yearly, file.path(dataPath(sim), paste0('yearly_', names(sim$rtms)[[1]], '_', ii, '.tif')))
+        writeRaster(yearly, file.path(dataPath(sim), .studyAreaName, paste0('yearly_', names(sim$rtms)[[1]], '_', ii, '.tif')))
         return(yearly)
-      })
+      }) |>
+        Cache()
     
       # schedule future event(s)
       # sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "prepLandscape", "plot")
