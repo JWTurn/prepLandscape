@@ -15,7 +15,7 @@ defineModule(sim, list(
   timeunit = "year",
   citation = list("citation.bib"),
   documentation = list("NEWS.md", "README.md", "prepLandscape.Rmd"),
-  reqdPkgs = list("SpaDES.core (>= 2.1.5.9002)", "ggplot2", "terra", "sf", 'stringr'),
+  reqdPkgs = list("SpaDES.core (>= 2.1.5.9002)", "ggplot2", "terra", "sf", 'stringr', 'data.table'),
   parameters = bindrows(
     defineParameter("histLandYears", "integer", 2010:2023, NA, NA,
                     paste0("This is the year range we use past (not simulated) landscape layers.")),
