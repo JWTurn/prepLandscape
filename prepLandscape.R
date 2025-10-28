@@ -234,7 +234,7 @@ Init <- function(sim) {
   }
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeFine", sim)){
-    sim$rasterToMatch_extendedLandscapeFine <- terra::rast(sim$studyArea_extendedLandscap, res = c(30, 30), vals = 1)
+    sim$rasterToMatch_extendedLandscapeFine <- terra::rast(sim$studyArea_extendedLandscape, res = c(30, 30), vals = 1)
   }
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscape", sim)){
