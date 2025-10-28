@@ -94,8 +94,10 @@ defineModule(sim, list(
   outputObjects = bindrows(
     #createsOutput("objectName", "objectClass", "output object description", ...),
     #createsOutput(objectName = NA, objectClass = NA, desc = NA)
-    createsOutput(objectName = 'histHarv', objectClass = 'spatRaster', 
-                  desc = 'spatRaster of historic harvest within extended study area')
+    createsOutput(objectName = 'landscapeYearly', objectClass = 'spatRaster', 
+                  desc = 'spatRaster stack of the yearly landscape layers'),
+    createsOutput(objectName = 'landscape5Yearly', objectClass = 'spatRaster', 
+                  desc = 'spatRaster stack of the 5 yearly landscape layers')
   )
 ))
 
@@ -173,6 +175,8 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
         return(yearly)
       }) |>
         Cache()
+      
+      sim$landscape5Yearly <- sim$anthroDisturb
     
       # schedule future event(s)
       # sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "prepLandscape", "plot")
@@ -279,7 +283,7 @@ Init <- function(sim) {
                                  savePath = dataPath(sim)) |>
       Cache()
     
-    sim$landscape5Yearly <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape, 
+    sim$anthroDisturb <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape, 
                                                     dataPath = dataPath(sim), source = 'ECCC', 
                                                     studyAreaName = .studyAreaName) |>
       Cache()
@@ -288,8 +292,4 @@ Init <- function(sim) {
   return(invisible(sim))
 }
 
-ggplotFn <- function(data, ...) {
-  ggplot2::ggplot(data, ggplot2::aes(TheSample)) +
-    ggplot2::geom_histogram(...)
-}
 
