@@ -238,11 +238,11 @@ Init <- function(sim) {
   }
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscape", sim)){
-    sim$rasterToMatch_extendedLandscape <- terra::aggregate(sim$rasterToMatch, fact = 6)
+    sim$rasterToMatch_extendedLandscape <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine, fact = 6)
   }
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeCoarse", sim)){
-    sim$rasterToMatch_extendedLandscapeCoarse <- terra::aggregate(sim$rasterToMatch, fact = 16)
+    sim$rasterToMatch_extendedLandscapeCoarse <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine, fact = 16)
   }
   
   if (!suppliedElsewhere("rtms", sim)){
