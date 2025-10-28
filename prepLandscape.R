@@ -192,26 +192,7 @@ Init <- function(sim) {
 
   return(invisible(sim))
 }
-### template for save events
-Save <- function(sim) {
-  # ! ----- EDIT BELOW ----- ! #
-  # do stuff for this event
-  sim <- saveFiles(sim)
 
-  # ! ----- STOP EDITING ----- ! #
-  return(invisible(sim))
-}
-
-### template for plot events
-plotFun <- function(sim) {
-  # ! ----- EDIT BELOW ----- ! #
-  # do stuff for this event
-  sampleData <- data.frame("TheSample" = sample(1:10, replace = TRUE))
-  Plots(sampleData, fn = ggplotFn) # needs ggplot2
-
-  # ! ----- STOP EDITING ----- ! #
-  return(invisible(sim))
-}
 
 
 
@@ -298,7 +279,7 @@ plotFun <- function(sim) {
                                  savePath = dataPath(sim)) |>
       Cache()
     
-    sim$anthroDisturbance <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape, 
+    sim$landscape5Yearly <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape, 
                                                     dataPath = dataPath(sim), source = 'ECCC', 
                                                     studyAreaName = .studyAreaName) |>
       Cache()
