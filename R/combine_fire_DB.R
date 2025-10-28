@@ -3,17 +3,17 @@
 #' @author Julie W. Turner
 
 combine_fire_DB <- function(nbacURL, nfdbURL, dPath, studyArea, savePath = NULL){
-  nbac <- prepInputs(url = nbacURL,
-                     destinationPath = dPath,
-                     targetFile = "NBAC_1972to2024_20250506.shp",  
-                     alsoExtract = "similar", fun = "terra::vect",
-                     to = studyArea)
+  nbac <- reproducible::prepInputs(url = nbacURL,
+                                   destinationPath = dPath,
+                                   targetFile = "NBAC_1972to2024_20250506.shp",  
+                                   alsoExtract = "similar", fun = "terra::vect",
+                                   to = studyArea)
   
-  nfdb <- prepInputs(url = nfdbURL,
-                     destinationPath = dPath,
-                     targetFile = "NFDB_poly_20210707.shp",  
-                     alsoExtract = "similar", fun = "terra::vect",
-                     to = studyArea)
+  nfdb <- reproducible::prepInputs(url = nfdbURL,
+                                   destinationPath = dPath,
+                                   targetFile = "NFDB_poly_20210707.shp",  
+                                   alsoExtract = "similar", fun = "terra::vect",
+                                   to = studyArea)
   # filter older to those prior to NBAC
   nfdb.pre <- subset(nfdb, nfdb$YEAR < min(nbac$YEAR, na.rm = T))
   

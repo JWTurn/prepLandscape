@@ -6,46 +6,46 @@
 prep_anthroDisturbance <- function(inputsPath, studyArea, dataPath, source = 'ECCC', studyAreaName = NULL) {
   ### ECCC disturbance ----
   if(source == 'ECCC'){
-    eccc_lines_2010 <- prepInputs(url = 'https://drive.google.com/file/d/1kgIUXuseEfiyv8tEWnAlWdRZkeIhQrwa/view?usp=share_link',
-                                  destinationPath = inputsPath,
-                                  targetFile = "EC_borealdisturbance_linear_2008_2010_FINAL_ALBERS.shp",  
-                                  alsoExtract = "similar", fun = "terra::vect",
-                                  to = studyArea
+    eccc_lines_2010 <- reproducible::prepInputs(url = 'https://drive.google.com/file/d/1kgIUXuseEfiyv8tEWnAlWdRZkeIhQrwa/view?usp=share_link',
+                                                destinationPath = inputsPath,
+                                                targetFile = "EC_borealdisturbance_linear_2008_2010_FINAL_ALBERS.shp",  
+                                                alsoExtract = "similar", fun = "terra::vect",
+                                                to = studyArea
     )
     
-    eccc_polys_2010 <- prepInputs(url = 'https://drive.google.com/file/d/1kgIUXuseEfiyv8tEWnAlWdRZkeIhQrwa/view?usp=share_link',
-                                  destinationPath = inputsPath,
-                                  targetFile = "EC_borealdisturbance_polygonal_2008_2010_FINAL_ALBERS.shp",  
-                                  alsoExtract = "similar", fun = "terra::vect",
-                                  to = studyArea
+    eccc_polys_2010 <- reproducible::prepInputs(url = 'https://drive.google.com/file/d/1kgIUXuseEfiyv8tEWnAlWdRZkeIhQrwa/view?usp=share_link',
+                                                destinationPath = inputsPath,
+                                                targetFile = "EC_borealdisturbance_polygonal_2008_2010_FINAL_ALBERS.shp",  
+                                                alsoExtract = "similar", fun = "terra::vect",
+                                                to = studyArea
     )
     
-    eccc_lines_2015 <- prepInputs(url = 'https://drive.google.com/file/d/1wFD7KWyd2GNYrcrkoh4xib5G5e35Odso/view?usp=share_link',
-                                  destinationPath = inputsPath,
-                                  targetFile = "eccc_disturb_lines_2015.shp",  
-                                  alsoExtract = "similar", fun = "terra::vect",
-                                  to = studyArea
+    eccc_lines_2015 <- reproducible::prepInputs(url = 'https://drive.google.com/file/d/1wFD7KWyd2GNYrcrkoh4xib5G5e35Odso/view?usp=share_link',
+                                                destinationPath = inputsPath,
+                                                targetFile = "eccc_disturb_lines_2015.shp",  
+                                                alsoExtract = "similar", fun = "terra::vect",
+                                                to = studyArea
     )
     
-    eccc_polys_2015 <- prepInputs(url = 'https://drive.google.com/file/d/1N-9H6RvFz94hfiMvE69qWHmube10MWmI/view?usp=share_link',
-                                  destinationPath = inputsPath,
-                                  targetFile = "eccc_disturb_polys_2015.shp",  
-                                  alsoExtract = "similar", fun = "terra::vect",
-                                  to = studyArea
+    eccc_polys_2015 <- reproducible::prepInputs(url = 'https://drive.google.com/file/d/1N-9H6RvFz94hfiMvE69qWHmube10MWmI/view?usp=share_link',
+                                                destinationPath = inputsPath,
+                                                targetFile = "eccc_disturb_polys_2015.shp",  
+                                                alsoExtract = "similar", fun = "terra::vect",
+                                                to = studyArea
     )
     
-    eccc_lines_2020 <- prepInputs(url = 'https://drive.google.com/file/d/1fUAbOPd4MWA5hlmiiJadUAVuCCkVwr8P/view?usp=share_link',
-                                  destinationPath = inputsPath,
-                                  targetFile = "eccc_disturb_lines_2020.shp",  
-                                  alsoExtract = "similar", fun = "terra::vect",
-                                  to = studyArea
+    eccc_lines_2020 <- reproducible::prepInputs(url = 'https://drive.google.com/file/d/1fUAbOPd4MWA5hlmiiJadUAVuCCkVwr8P/view?usp=share_link',
+                                                destinationPath = inputsPath,
+                                                targetFile = "eccc_disturb_lines_2020.shp",  
+                                                alsoExtract = "similar", fun = "terra::vect",
+                                                to = studyArea
     )
     
-    eccc_polys_2020 <- prepInputs(url = 'https://drive.google.com/file/d/1sICz5D6nvwyHCA-l95ZrmYjfCXxInPJz/view?usp=share_link',
-                                  destinationPath = inputsPath,
-                                  targetFile = "eccc_disturb_polys_2020.shp",  
-                                  alsoExtract = "similar", fun = "terra::vect",
-                                  to = studyArea
+    eccc_polys_2020 <- reproducible::prepInputs(url = 'https://drive.google.com/file/d/1sICz5D6nvwyHCA-l95ZrmYjfCXxInPJz/view?usp=share_link',
+                                                destinationPath = inputsPath,
+                                                targetFile = "eccc_disturb_polys_2020.shp",  
+                                                alsoExtract = "similar", fun = "terra::vect",
+                                                to = studyArea
     )
     
     ## roads lfs
@@ -58,11 +58,11 @@ prep_anthroDisturbance <- function(inputsPath, studyArea, dataPath, source = 'EC
     roads_2020 <- subset(eccc_lines_2020, (eccc_lines_2020$Class %in% c('Road', 'Railway')))
     
     
-    roads.mask.2015 <- mask(roads_2010, roads_2015, inverse = T)
+    roads.mask.2015 <- terra::mask(roads_2010, roads_2015, inverse = T)
     roads_2015_merge <- rbind(roads_2015, roads.mask.2015)
     
     
-    roads.mask.2020 <- mask(roads_2010, roads_2020, inverse = T)
+    roads.mask.2020 <- terra::mask(roads_2010, roads_2020, inverse = T)
     roads_2020_merge <- rbind(roads_2020, roads.mask.2020)
     
     ## not roads lfs
@@ -76,11 +76,11 @@ prep_anthroDisturbance <- function(inputsPath, studyArea, dataPath, source = 'EC
     notroads_2020 <- subset(eccc_lines_2020, !(eccc_lines_2020$Class %in% c('Road', 'Railway')))
     
     
-    notroads.mask.2015 <- mask(notroads_2010, notroads_2015, inverse = T)
+    notroads.mask.2015 <- terra::mask(notroads_2010, notroads_2015, inverse = T)
     notroads_2015_merge <- rbind(notroads_2015, notroads.mask.2015)
     
     
-    notroads.mask.2020 <- mask(notroads_2010, notroads_2020, inverse = T)
+    notroads.mask.2020 <- terra::mask(notroads_2010, notroads_2020, inverse = T)
     notroads_2020_merge <- rbind(notroads_2020, notroads.mask.2020)
     
     # polygonal disturbance
@@ -95,11 +95,11 @@ prep_anthroDisturbance <- function(inputsPath, studyArea, dataPath, source = 'EC
     
     
     
-    dist.mask.2015 <- mask(disturb_2010, disturb_2015, inverse = T)
-    disturb_2015_merge <- union(disturb_2015, dist.mask.2015)
+    dist.mask.2015 <- terra::mask(disturb_2010, disturb_2015, inverse = T)
+    disturb_2015_merge <- terra::union(disturb_2015, dist.mask.2015)
     
-    dist.mask.2020 <- mask(disturb_2010, disturb_2020, inverse = T)
-    disturb_2020_merge <- union(disturb_2020, dist.mask.2020)
+    dist.mask.2020 <- terra::mask(disturb_2010, disturb_2020, inverse = T)
+    disturb_2020_merge <- terra::union(disturb_2020, dist.mask.2020)
     
     # gather yearly disturbances
     disturbances2010 <- c(roads_2010, notroads_2010, disturb_2010)
