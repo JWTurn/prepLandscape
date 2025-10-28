@@ -49,7 +49,7 @@ defineModule(sim, list(
     #expectsInput(objectName = NA, objectClass = NA, desc = NA, sourceURL = NA)
     expectsInput(objectName = 'studyArea', objectClass = 'SpatVector', 
                  desc = 'Study area of telemetry data + herd areas', 
-                 sourceURL = 'https://drive.google.com/file/d/1XduunieEoZLcNPQphGXnKG7Ql9MF1bme/view?usp=share_link'),
+                 sourceURL = 'https://drive.google.com/file/d/1iq1f53pAtZFIFoN1RFhlXEghSbvI3Dnf/view?usp=share_link'),
     
     expectsInput(objectName = 'studyArea_extendedLandscape', objectClass = 'SpatVector', 
                  desc = 'Extended study area for prepping landscape layers'),
