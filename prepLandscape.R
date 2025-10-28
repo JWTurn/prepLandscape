@@ -222,7 +222,7 @@ Init <- function(sim) {
   # ! ----- EDIT BELOW ----- ! #
   # TODO give a smaller area
   if (!suppliedElsewhere("studyArea", sim)){
-    sim$studyArea <- prepInputs(url = extractURL("studyArea"),
+    sim$studyArea <- reproducible::prepInputs(url = extractURL("studyArea"),
                                 destinationPath = dataPath(sim),
                                 targetFile = "studyArea_bcnwt_4sims.shp",  
                                 alsoExtract = "similar", fun = "terra::vect") |>
@@ -263,14 +263,14 @@ Init <- function(sim) {
                                               fun = 'terra::rast') |>
       Cache()
   
-    sim$disturbCanLadOldType <- prepInputs(url = extractURL('CanLadOldTypeURL'),
+    sim$disturbCanLadOldType <- reproducible::prepInputs(url = extractURL('CanLadOldTypeURL'),
                                        destinationPath = dPath,
                                        alsoExtract = "similar", fun = "terra::rast",
                                        to = sim$rasterToMatch_extendedLandscapeFine,
                                        method = 'near') |>
       Cache()
    
-    sim$disturbCanLadOldYear <- prepInputs(url = extractURL('CanLadOldYearURL'), 
+    sim$disturbCanLadOldYear <- reproducible::prepInputs(url = extractURL('CanLadOldYearURL'), 
                                        destinationPath = dPath,
                                        alsoExtract = "similar", fun = "terra::rast",
                                        to = sim$rasterToMatch_extendedLandscapeFine,
