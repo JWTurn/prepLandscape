@@ -5,13 +5,13 @@
 combine_fire_DB <- function(nbacURL, nfdbURL, dPath, studyArea, savePath = NULL){
   nbac <- reproducible::prepInputs(url = nbacURL,
                                    destinationPath = dPath,
-                                   targetFile = "NBAC_1972to2024_20250506.shp",  
+                                   #targetFile = "NBAC_1972to2024_20250506.shp",  
                                    alsoExtract = "similar", fun = "terra::vect",
                                    to = studyArea)
   
   nfdb <- reproducible::prepInputs(url = nfdbURL,
                                    destinationPath = dPath,
-                                   targetFile = "NFDB_poly_20210707.shp",  
+                                   #targetFile = "NFDB_poly_20210707.shp",  
                                    alsoExtract = "similar", fun = "terra::vect",
                                    to = studyArea)
   # filter older to those prior to NBAC
