@@ -37,7 +37,7 @@ defineModule(sim, list(
                     "This describes the simulation time interval between save events."),
     defineParameter(".studyAreaName", "character", NA, NA, NA,
                     "Human-readable name for the study area used - e.g., a hash of the study",
-                          "area obtained using `reproducible::studyAreaName()`"),
+                    "area obtained using `reproducible::studyAreaName()`"),
     ## .seed is optional: `list('init' = 123)` will `set.seed(123)` for the `init` event only.
     defineParameter(".seed", "list", list(), NA, NA,
                     "Named list of seeds to use for each event (names)."),
@@ -86,7 +86,7 @@ defineModule(sim, list(
                  desc = paste("A coarser raster to match of the study area plus large bufferto caluculate proportions of landcover.")),
     expectsInput("rtmFuns", "list",
                  desc = paste0("List functions to apply to rasters for moving windows or not.",
-                              " Currently only applies to landcover")),
+                               " Currently only applies to landcover")),
     expectsInput("rtms", "list",
                  desc = paste0("List of template rasters. Only 1 if working at one resolution."))
     
@@ -127,45 +127,45 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       
       newHarvRast <- make_CanLad_cumulative(yrs = newYears, disturbTypeCode = 2, 
                                             dPath = dPath, rtm = sim$rasterToMatch_extendedLandscape) |>
-        Cache()
+        Cache(.cacheExtra = mod$dig, omitArgs = 'rtm')
       
       # combine all types together
       harvs <- c(disturbCanLadOldHarvYear, sim$harvNTEMS, newHarvRast)
       names(harvs) <- c('CanLadOld', 'NTEMS', 'CanLadNew')
       
       timeSinceHarvest <- Map(nn = paste0('year', histLandYears), yr = histLandYears, 
-                      rtm = rasterToMatch_extendedLandscape, background = backgroundYr, 
-                      function(nn, yr, rtm, background){
-                        
-                        
-                        harvsYrPos <- clamp(harvs, upper = yr, value = F)
-                        maxRast <- max(harvsYrPos, na.rm = T)
-                        timeSince <- yr - maxRast
-                        backgrnd <- yr - background
-                        timeSinceFill <- mask(ifel(is.na(timeSince), backgrnd, timeSince), rtm)
-                        names(timeSinceFill) <- 'timeSinceHarvest'
-                        return(timeSinceFill)
-                      })
+                              rtm = rasterToMatch_extendedLandscape, background = backgroundYr, 
+                              function(nn, yr, rtm, background){
+                                
+                                
+                                harvsYrPos <- clamp(harvs, upper = yr, value = F)
+                                maxRast <- max(harvsYrPos, na.rm = T)
+                                timeSince <- yr - maxRast
+                                backgrnd <- yr - background
+                                timeSinceFill <- mask(ifel(is.na(timeSince), backgrnd, timeSince), rtm)
+                                names(timeSinceFill) <- 'timeSinceHarvest'
+                                return(timeSinceFill)
+                              })
       
       
       
       #rtmsDigest <- .robustDigest(rtms)
-     # names(P(sim)$historicLandYears) <- P(sim)$historicLandYears
+      # names(P(sim)$historicLandYears) <- P(sim)$historicLandYears
       mod$histLand <- Map(rtmname = names(sim$rtms), rtm = sim$rtms, 
-                              #rtmDigest = rtmsDigest, 
+                          #rtmDigest = rtmsDigest, 
                           rtmFun = sim$rtmsFuns, function(rtm, rtmname, rtmFun) {
-        
-        Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
-          reproducible::prepInputs(
-            url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
-            destinationPath = dPath, # end pre process
-            fun = rtmFun, # end process
-            rtm = rtm) |>
-            #writeTo = file.path(dataPath(sim), paste0('propLand_', rtmname, '_', ii, '.tif'))) |> ## TODO set name
-            Cache()
-        })
-        
-      })|>
+                            
+                            Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
+                              reproducible::prepInputs(
+                                url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
+                                destinationPath = dPath, # end pre process
+                                fun = rtmFun, # end process
+                                rtm = rtm) |>
+                                #writeTo = file.path(dataPath(sim), paste0('propLand_', rtmname, '_', ii, '.tif'))) |> ## TODO set name
+                                Cache()
+                            })
+                            
+                          })|>
         Cache()
       
       sim$landscapeYearly <- Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
@@ -177,7 +177,7 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
         Cache()
       
       sim$landscape5Yearly <- sim$anthroDisturb
-    
+      
       # schedule future event(s)
       # sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "prepLandscape", "plot")
       # sim <- scheduleEvent(sim, P(sim)$.saveInitialTime, "prepLandscape", "save")
@@ -191,9 +191,9 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
 ### template initialization
 Init <- function(sim) {
   # # ! ----- EDIT BELOW ----- ! #
-
+  
   # ! ----- STOP EDITING ----- ! #
-
+  
   return(invisible(sim))
 }
 
@@ -214,35 +214,45 @@ Init <- function(sim) {
   # if (!suppliedElsewhere('defaultColor', sim)) {
   #   sim$map <- Cache(prepInputs, extractURL('map')) # download, extract, load file from url in sourceURL
   # }
-
+  
   cacheTags <- c(currentModule(sim), "function:.inputObjects") ## uncomment this if Cache is being used
   dPath <- asPath(getOption("reproducible.destinationPath", inputPath(sim)), 1)
   message(currentModule(sim), ": using dataPath '", dPath, "'.")
-
+  
   # ! ----- EDIT BELOW ----- ! #
   # TODO give a smaller area
   if (!suppliedElsewhere("studyArea", sim)){
     sim$studyArea <- reproducible::prepInputs(url = extractURL("studyArea"),
-                                destinationPath = dataPath(sim),
-                                targetFile = "studyArea_bcnwt_4sims.shp",  
-                                alsoExtract = "similar", fun = "terra::vect") |>
+                                              destinationPath = dataPath(sim),
+                                              targetFile = "studyArea_bcnwt_4sims.shp",  
+                                              alsoExtract = "similar", fun = "terra::vect") |>
       Cache()
   }
   
   if (!suppliedElsewhere("studyArea_extendedLandscape", sim)){
-    sim$studyArea_extendedLandscape <- terra::buffer(sim$studyArea, 100000)
+    sim$studyArea_extendedLandscape <- terra::buffer(sim$studyArea, 100000) |>
+      Cache()
   }
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeFine", sim)){
-    sim$rasterToMatch_extendedLandscapeFine <- terra::rast(sim$studyArea_extendedLandscape, res = c(30, 30), vals = 1)
+    sim$rasterToMatch_extendedLandscapeFine <- terra::rast(sim$studyArea_extendedLandscape, 
+                                                           res = c(30, 30), vals = 1)|>
+      Cache()
   }
+  mod$dig <- reproducible::CacheDigest(sim$rasterToMatch_extendedLandscapeFine)
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscape", sim)){
-    sim$rasterToMatch_extendedLandscape <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine, fact = 6)
+    sim$rasterToMatch_extendedLandscape <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine, 
+                                                            fact = 6)|>
+      Cache(.cacheExtra = mod$dig, omitArgs = 'x')
   }
   
+  mod$dig <- reproducible::CacheDigest(list(sim$rasterToMatch_extendedLandscapeFine, sim$rasterToMatch_extendedLandscape))
+  
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeCoarse", sim)){
-    sim$rasterToMatch_extendedLandscapeCoarse <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine, fact = 16)
+    sim$rasterToMatch_extendedLandscapeCoarse <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine, 
+                                                                  fact = 16)|>
+      Cache(.cacheExtra = mod$dig, omitArgs = 'x')
   }
   
   if (!suppliedElsewhere("rtms", sim)){
@@ -252,42 +262,43 @@ Init <- function(sim) {
   
   if (!suppliedElsewhere("rtmFuns", sim)){
     sim$rtmFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
-                             P(sim)$buffer,', where2save = dataPath(sim))'))
+                            P(sim)$buffer,', where2save = dataPath(sim))'))
   }
   
   
   
-    sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMSurl"),
-                                              destinationPath = dPath,
-                                              to = sim$rasterToMatch_extendedLandscapeFine, 
-                                              fun = 'terra::rast') |>
-      Cache()
+  sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMSurl"),
+                                            destinationPath = dPath,
+                                            to = sim$rasterToMatch_extendedLandscapeFine, 
+                                            fun = 'terra::rast') |>
+    Cache(.cacheExtra = mod$dig, omitArgs = 'to')
   
-    sim$disturbCanLadOldType <- reproducible::prepInputs(url = extractURL('CanLadOldTypeURL'),
-                                       destinationPath = dPath,
-                                       alsoExtract = "similar", fun = "terra::rast",
-                                       to = sim$rasterToMatch_extendedLandscapeFine,
-                                       method = 'near') |>
-      Cache()
-   
-    sim$disturbCanLadOldYear <- reproducible::prepInputs(url = extractURL('CanLadOldYearURL'), 
-                                       destinationPath = dPath,
-                                       alsoExtract = "similar", fun = "terra::rast",
-                                       to = sim$rasterToMatch_extendedLandscapeFine,
-                                       method = 'near') |>
-      Cache()
-    
-    
-    sim$fires <- combine_fire_DB(nbacURL = 'nbacURL', nfdbURL = 'nfdbURL', dPath, 
-                                 sim$studyArea_extendedLandscape, 
-                                 savePath = dataPath(sim)) |>
-      Cache()
-    
-    sim$anthroDisturb <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape, 
-                                                    dataPath = dataPath(sim), source = 'ECCC', 
-                                                    studyAreaName = .studyAreaName) |>
-      Cache()
-
+  sim$disturbCanLadOldType <- reproducible::prepInputs(url = extractURL('CanLadOldTypeURL'),
+                                                       destinationPath = dPath,
+                                                       alsoExtract = "similar", fun = "terra::rast",
+                                                       to = sim$rasterToMatch_extendedLandscapeFine,
+                                                       method = 'near') |>
+    Cache(.cacheExtra = mod$dig, omitArgs = 'to')
+  
+  sim$disturbCanLadOldYear <- reproducible::prepInputs(url = extractURL('CanLadOldYearURL'), 
+                                                       destinationPath = dPath,
+                                                       alsoExtract = "similar", fun = "terra::rast",
+                                                       to = sim$rasterToMatch_extendedLandscapeFine,
+                                                       method = 'near') |>
+    Cache(.cacheExtra = mod$dig, omitArgs = 'to')
+  
+  
+  sim$fires <- combine_fire_DB('nbacURL', 'nfdbURL', dPath, 
+                               sim$studyArea_extendedLandscape,
+                               studyAreaName = Par$.studyAreaName,
+                               savePath = dataPath(sim)) |>
+    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea')
+  
+  sim$anthroDisturb <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape, 
+                                              dataPath = dataPath(sim), source = 'ECCC', 
+                                              studyAreaName = Par$.studyAreaName) |>
+    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea')
+  
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
 }
