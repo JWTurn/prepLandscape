@@ -2,18 +2,22 @@
 #' @export
 #' @author Julie W. Turner
 
-combine_fire_DB <- function(nbacURL, nfdbURL, dPath, studyArea, savePath = NULL){
-  nbac <- reproducible::prepInputs(url = nbacURL,
+combine_fire_DB <- function(nbacURL, nfdbURL, dPath, studyArea, studyAreaName = NULL, savePath = NULL){
+  
+  nbac <- reproducible::prepInputs(url = extractURL(nbacURL),
                                    destinationPath = dPath,
                                    #targetFile = "NBAC_1972to2024_20250506.shp",  
                                    alsoExtract = "similar", fun = "terra::vect",
-                                   to = studyArea)
+                                   to = studyArea) |>
+    Cache()
   
-  nfdb <- reproducible::prepInputs(url = nfdbURL,
+  nfdb <- reproducible::prepInputs(url = extractURL(nfdbURL),
                                    destinationPath = dPath,
                                    #targetFile = "NFDB_poly_20210707.shp",  
                                    alsoExtract = "similar", fun = "terra::vect",
-                                   to = studyArea)
+                                   to = studyArea) |>
+    Cache()
+  
   # filter older to those prior to NBAC
   nfdb.pre <- subset(nfdb, nfdb$YEAR < min(nbac$YEAR, na.rm = T))
   
@@ -37,8 +41,9 @@ combine_fire_DB <- function(nbacURL, nfdbURL, dPath, studyArea, savePath = NULL)
   message('complete harmonizing data')
   
   if (!is.null(savePath)){
-    writeVector(fires.all, savePath)
-    message(paste0('saved processed fire to ', savePath))
+    saveName <- file.path(savePath, paste0(studyAreaName, '_firesDB.shp'))
+    terra::writeVector(fires.all, (saveName))
+    message(paste0('saved processed fire to ', saveName))
   }
   
   return(fires.all)
