@@ -112,9 +112,11 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       
       # load disturbances
       ##### FIRES ----
+      
       mod$histFire <- make_timeSinceDisturb_rast(layer = sim$fires, rast = sim$rasterToMatch_extendedLandscape, 
-                                                 disturbanceType = 'Fire', minyr = min(P(sim)$histLandYears), 
-                                                 backgrnd = backgroundYr, where2save = NULL)
+                                                 disturbanceType = 'Fire', 
+                                                 minyr = min(P(sim)$histLandYears), #maxyr = max(P(sim)$histLandYears), 
+                                                 backgrndYear = P(sim)$backgroundYr, where2save = NULL)
       
       ##### HARVEST -----
       sim$harvNTEMS[sim$harvNTEMS==0]<-NA
@@ -236,7 +238,9 @@ Init <- function(sim) {
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeFine", sim)){
     sim$rasterToMatch_extendedLandscapeFine <- terra::rast(sim$studyArea_extendedLandscape, 
-                                                           res = c(30, 30), vals = 1)|>
+                                                           res = c(30, 30), vals = 1)
+    sim$rasterToMatch_extendedLandscapeFine <- terra::mask(sim$rasterToMatch_extendedLandscapeFine,
+                                                           sim$studyArea_extendedLandscape)|>
       Cache()
   }
   mod$dig <- reproducible::CacheDigest(sim$rasterToMatch_extendedLandscapeFine)
@@ -295,8 +299,7 @@ Init <- function(sim) {
     Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea')
   
   sim$anthroDisturb <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape, 
-                                              dataPath = dataPath(sim), source = 'ECCC', 
-                                              studyAreaName = Par$.studyAreaName) |>
+                                              dataPath = dataPath(sim), source = 'ECCC') |>
     Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea')
   
   # ! ----- STOP EDITING ----- ! #
