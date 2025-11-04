@@ -11,7 +11,7 @@ make_CanLad_cumulative <- function(yrs, disturbTypeCode, dPath, rtm){
                                             fun = 'terra::rast',
                                             to = rtm,
                                             method = 'near')
-      indivDisturbYr <- (match(disturbYr, disturbType))*yr
+      indivDisturbYr <- (terra::match(disturbYr, disturbType))*yr
       names(indivDisturbYr) <- as.character(yr)
       return(indivDisturbYr)
       message(paste0('completed ', yr))
