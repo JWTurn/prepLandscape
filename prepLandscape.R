@@ -280,6 +280,7 @@ Init <- function(sim) {
   sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMSurl"),
                                             destinationPath = dPath,
                                             to = sim$rasterToMatch_extendedLandscapeFine, 
+                                            method = 'near',
                                             fun = 'terra::rast') |>
     Cache(.cacheExtra = mod$dig, omitArgs = 'to')
   
