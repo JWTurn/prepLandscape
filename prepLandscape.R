@@ -129,7 +129,7 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       
       # add recent harvest after NTEMS
       
-      newYears <- (max(terra::values(sim$harvNTEMs), na.rm = T)+1) : max(P(sim)$histLandYears)
+      newYears <- (max(terra::values(sim$harvNTEMS), na.rm = T)+1) : max(P(sim)$histLandYears)
       
       newHarvRast <- make_CanLad_cumulative(yrs = newYears, disturbTypeCode = 2, 
                                             dPath = dPath, rtm = sim$rasterToMatch_extendedLandscape) |>
