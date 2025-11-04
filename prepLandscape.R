@@ -116,27 +116,32 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       mod$histFire <- make_timeSinceDisturb_rast(layer = sim$fires, rast = sim$rasterToMatch_extendedLandscape, 
                                                  disturbanceType = 'Fire', 
                                                  minyr = min(P(sim)$histLandYears), #maxyr = max(P(sim)$histLandYears), 
-                                                 backgrndYear = P(sim)$backgroundYr, where2save = NULL)
+                                                 backgrndYear = P(sim)$backgroundYr, where2save = NULL) |>
+        Cache(.cacheExtra = mod$dig, omitArgs = 'rast')
       
       ##### HARVEST -----
       sim$harvNTEMS[sim$harvNTEMS==0]<-NA
       
       # get before 1985 harvest from CanLaD -- get year only for harv
-      disturbCanLadOldHarvYear <- mask(sim$disturbCanLadOldYear, match(sim$disturbCanLadOldType, 3))
+      disturbCanLadOldHarvYear <- terra::mask(sim$disturbCanLadOldYear, terra::match(sim$disturbCanLadOldType, 3)) |>
+        Cache()
+      message('get before 1985 harvest from CanLaD')
       
       # add recent harvest after NTEMS
-      newYears <- (max(values(sim$harvNTEMs), na.rm = T)+1) : max(P(sim)$histLandYears)
+      
+      newYears <- (max(terra::values(sim$harvNTEMs), na.rm = T)+1) : max(P(sim)$histLandYears)
       
       newHarvRast <- make_CanLad_cumulative(yrs = newYears, disturbTypeCode = 2, 
                                             dPath = dPath, rtm = sim$rasterToMatch_extendedLandscape) |>
         Cache(.cacheExtra = mod$dig, omitArgs = 'rtm')
+      message('add recent harvest after NTEMS')
       
       # combine all types together
       harvs <- c(disturbCanLadOldHarvYear, sim$harvNTEMS, newHarvRast)
       names(harvs) <- c('CanLadOld', 'NTEMS', 'CanLadNew')
       
-      timeSinceHarvest <- Map(nn = paste0('year', histLandYears), yr = histLandYears, 
-                              rtm = rasterToMatch_extendedLandscape, background = backgroundYr, 
+      timeSinceHarvest <- Map(nn = paste0('year', P(sim)$histLandYears), yr = P(sim)$histLandYears, 
+                              rtm = sim$rasterToMatch_extendedLandscape, background = P(sim)$backgroundYr, 
                               function(nn, yr, rtm, background){
                                 
                                 
@@ -147,9 +152,10 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
                                 timeSinceFill <- mask(ifel(is.na(timeSince), backgrnd, timeSince), rtm)
                                 names(timeSinceFill) <- 'timeSinceHarvest'
                                 return(timeSinceFill)
-                              })
+                              })|>
+        Cache(.cacheExtra = mod$dig, omitArgs = 'rtm')
       
-      
+      message('combine all harvest data')
       
       #rtmsDigest <- .robustDigest(rtms)
       # names(P(sim)$historicLandYears) <- P(sim)$historicLandYears
