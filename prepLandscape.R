@@ -253,7 +253,7 @@ Init <- function(sim) {
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscape", sim)){
     sim$rasterToMatch_extendedLandscape <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine, 
-                                                            fact = 6)|>
+                                                            fact = 8)|>
       Cache(.cacheExtra = mod$dig, omitArgs = 'x')
   }
   
