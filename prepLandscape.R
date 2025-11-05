@@ -280,9 +280,9 @@ Init <- function(sim) {
   
   sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMSurl"),
                                             destinationPath = dPath,
-                                            to = sim$rasterToMatch_extendedLandscapeFine, 
-                                            method = 'near',
-                                            fun = 'terra::rast') |>
+                                            to = sim$rasterToMatch_extendedLandscapeFine,
+                                            fun = 'terra::rast', 
+                                            method = 'near') |>
     Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'prepInputs_harvNTEMS')
   
   sim$disturbCanLadOldType <- reproducible::prepInputs(url = extractURL('CanLadOldTypeURL'),
