@@ -123,9 +123,11 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       sim$harvNTEMS[sim$harvNTEMS==0]<-NA
       
       # get before 1985 harvest from CanLaD -- get year only for harv
-      disturbCanLadOldHarvYear <- terra::mask(sim$disturbCanLadOldYear, terra::match(sim$disturbCanLadOldType, 3)) |>
-        Cache()
-      message('get before 1985 harvest from CanLaD')
+      disturbCanLadOldHarvYearFine <- terra::mask(sim$disturbCanLadOldYear, terra::match(sim$disturbCanLadOldType, 3)) |>
+        Cache(.functionName = 'makeCanLadHarvOldFine')
+      disturbCanLadOldHarvYear <- reproducible::postProcess(disturbCanLadOldHarvYearFine, to = sim$rasterToMatch_extendedLandscape)|>
+        Cache(.functionName = 'makeCanLadHarvOld')
+      message('gathered before 1985 harvest from CanLaD')
       
       # add recent harvest after NTEMS
       
@@ -138,7 +140,11 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       message('add recent harvest after NTEMS')
       
       # combine all types together
-      harvs <- c(disturbCanLadOldHarvYear, sim$harvNTEMS, newHarvRast)
+      
+      harvNTEMScoarse <- reproducible::postProcess(sim$harvNTEMS, to = sim$rasterToMatch_extendedLandscape)|>
+        Cache(.functionName = 'makeHarvNTEMScoarse')
+      
+      harvs <- c(disturbCanLadOldHarvYear, harvNTEMScoarse, newHarvRast)
       names(harvs) <- c('CanLadOld', 'NTEMS', 'CanLadNew')
       
       timeSinceHarvest <- Map(nn = paste0('year', P(sim)$histLandYears), yr = P(sim)$histLandYears, 
@@ -250,7 +256,7 @@ Init <- function(sim) {
                                                            sim$studyArea_extendedLandscape)|>
       Cache()
   }
-  mod$dig <- reproducible::CacheDigest(sim$rasterToMatch_extendedLandscapeFine)
+  mod$dig <- reproducible::CacheDigest(sim$rasterToMatch_extendedLandscapeFine)$outputHash
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscape", sim)){
     sim$rasterToMatch_extendedLandscape <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine, 
@@ -258,7 +264,7 @@ Init <- function(sim) {
       Cache(.cacheExtra = mod$dig, omitArgs = 'x')
   }
   
-  mod$dig <- reproducible::CacheDigest(list(sim$rasterToMatch_extendedLandscapeFine, sim$rasterToMatch_extendedLandscape))
+  mod$dig <- c(mod$dig, reproducible::CacheDigest(sim$rasterToMatch_extendedLandscape)$outputHash)
   
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeCoarse", sim)){
     sim$rasterToMatch_extendedLandscapeCoarse <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine, 
@@ -269,7 +275,10 @@ Init <- function(sim) {
   if (!suppliedElsewhere("rtms", sim)){
     sim$rtms <- list(sim$rasterToMatch_extendedLandscape)
     names(sim$rtms) <- c('window240')
+    sim$rtms |>
+      Cache()
   }
+  mod$dig <- c(mod$dig, reproducible::CacheDigest(sim$trms)$outputHash)
   
   if (!suppliedElsewhere("rtmFuns", sim)){
     sim$rtmFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
@@ -280,9 +289,8 @@ Init <- function(sim) {
   
   sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMSurl"),
                                             destinationPath = dPath,
-                                            to = sim$rasterToMatch_extendedLandscapeFine,
-                                            fun = 'terra::rast', 
-                                            method = 'near') |>
+                                            to = sim$rasterToMatch_extendedLandscapeFine, 
+                                            fun = 'terra::rast') |>
     Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'prepInputs_harvNTEMS')
   
   sim$disturbCanLadOldType <- reproducible::prepInputs(url = extractURL('CanLadOldTypeURL'),
@@ -290,25 +298,25 @@ Init <- function(sim) {
                                                        alsoExtract = "similar", fun = "terra::rast",
                                                        to = sim$rasterToMatch_extendedLandscapeFine,
                                                        method = 'near') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'prepInputs_canLadOldType')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'to')
   
   sim$disturbCanLadOldYear <- reproducible::prepInputs(url = extractURL('CanLadOldYearURL'), 
                                                        destinationPath = dPath,
                                                        alsoExtract = "similar", fun = "terra::rast",
                                                        to = sim$rasterToMatch_extendedLandscapeFine,
                                                        method = 'near') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'prepInputs_canLadOldYear')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'to')
   
   
   sim$fires <- combine_fire_DB('nbacURL', 'nfdbURL', dPath, 
                                sim$studyArea_extendedLandscape,
                                studyAreaName = Par$.studyAreaName,
                                savePath = dataPath(sim)) |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea', .functionName = 'prepInputs_combFires')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea')
   
   sim$anthroDisturb <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape, 
                                               dataPath = dataPath(sim), source = 'ECCC') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea', .functionName = 'prepInputs_anthroDisturb')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea')
   
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
