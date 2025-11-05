@@ -54,6 +54,9 @@ defineModule(sim, list(
     expectsInput(objectName = 'studyArea_extendedLandscape', objectClass = 'SpatVector',
                  desc = 'Extended study area for prepping landscape layers'),
 
+    expectsInput(objectName = 'buffer', objectClass = 'numeric',
+                 desc = 'Buffer for moving windows'),
+
     expectsInput(objectName = 'harvNTEMSurl', objectClass = 'SpatRaster',
                  desc = 'harvest history',
                  sourceURL = "https://opendata.nfis.org/downloads/forest_change/CA_Forest_Harvest_1985-2020.zip"),
@@ -168,13 +171,13 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       # names(P(sim)$historicLandYears) <- P(sim)$historicLandYears
       mod$histLand <- Map(rtmname = names(sim$rtms), rtm = sim$rtms,
                           #rtmDigest = rtmsDigest,
-                          rtmFun = sim$rtmsFuns, function(rtm, rtmname, rtmFun) {
+                          rtmFun = sim$rtmFuns, function(rtm, rtmname, rtmFun) {
 
                             Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
                               reproducible::prepInputs(
                                 url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
                                 destinationPath = dPath, # end pre process
-                                fun = rtmFun, # end process
+                                fun = eval(rtmFun), # end process
                                 rtm = rtm) |>
                                 #writeTo = file.path(dataPath(sim), paste0('propLand_', rtmname, '_', ii, '.tif'))) |> ## TODO set name
                                 Cache(.functionName = paste0(rtmname, ii, '_propLand'))
@@ -280,9 +283,13 @@ Init <- function(sim) {
   }
 
 
+  if (!suppliedElsewhere("buffer", sim)){
+    sim$buffer <- 750
+  }
+
   if (!suppliedElsewhere("rtmFuns", sim)){
     sim$rtmFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
-                            P(sim)$buffer,', where2save = NULL)'))
+                            sim$buffer,', where2save = NULL)'))
   }
 
 
