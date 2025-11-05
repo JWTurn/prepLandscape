@@ -283,32 +283,32 @@ Init <- function(sim) {
                                             to = sim$rasterToMatch_extendedLandscapeFine, 
                                             method = 'near',
                                             fun = 'terra::rast') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'to')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'prepInputs_harvNTEMS')
   
   sim$disturbCanLadOldType <- reproducible::prepInputs(url = extractURL('CanLadOldTypeURL'),
                                                        destinationPath = dPath,
                                                        alsoExtract = "similar", fun = "terra::rast",
                                                        to = sim$rasterToMatch_extendedLandscapeFine,
                                                        method = 'near') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'to')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'prepInputs_canLadOldType')
   
   sim$disturbCanLadOldYear <- reproducible::prepInputs(url = extractURL('CanLadOldYearURL'), 
                                                        destinationPath = dPath,
                                                        alsoExtract = "similar", fun = "terra::rast",
                                                        to = sim$rasterToMatch_extendedLandscapeFine,
                                                        method = 'near') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'to')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'prepInputs_canLadOldYear')
   
   
   sim$fires <- combine_fire_DB('nbacURL', 'nfdbURL', dPath, 
                                sim$studyArea_extendedLandscape,
                                studyAreaName = Par$.studyAreaName,
                                savePath = dataPath(sim)) |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea', .functionName = 'prepInputs_combFires')
   
   sim$anthroDisturb <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape, 
                                               dataPath = dataPath(sim), source = 'ECCC') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea', .functionName = 'prepInputs_anthroDisturb')
   
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
