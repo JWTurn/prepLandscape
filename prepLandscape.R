@@ -120,7 +120,7 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
                                                  disturbanceType = 'Fire',
                                                  minyr = min(P(sim)$histLandYears), #maxyr = max(P(sim)$histLandYears),
                                                  backgrndYear = P(sim)$backgroundYr, where2save = NULL) |>
-        Cache(.cacheExtra = mod$dig, omitArgs = 'rast')
+        Cache(.cacheExtra = mod$dig, omitArgs = 'rast', .functionName = 'makeTimeSinceFire')
 
       ##### HARVEST -----
       sim$harvNTEMS[sim$harvNTEMS==0]<-NA
@@ -139,7 +139,7 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
 
       newHarvRast <- make_CanLad_cumulative(yrs = newYears, disturbTypeCode = 2,
                                             dPath = dPath, rtm = sim$rasterToMatch_extendedLandscape) |>
-        Cache(.cacheExtra = mod$dig, omitArgs = 'rtm')
+        Cache(.cacheExtra = mod$dig, omitArgs = 'rtm', .functionName = 'makeNewHarvRast')
       message('add recent harvest after NTEMS')
 
       # combine all types together
@@ -249,7 +249,7 @@ Init <- function(sim) {
 
   if (!suppliedElsewhere("studyArea_extendedLandscape", sim)){
     sim$studyArea_extendedLandscape <- terra::buffer(sim$studyArea, 100000) |>
-      Cache()
+      Cache(.functionName = 'prep_studyArea_extendedLandscape')
   }
 
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeFine", sim)){
@@ -257,14 +257,14 @@ Init <- function(sim) {
                                                            res = c(30, 30), vals = 1)
     sim$rasterToMatch_extendedLandscapeFine <- terra::mask(sim$rasterToMatch_extendedLandscapeFine,
                                                            sim$studyArea_extendedLandscape)|>
-      Cache()
+      Cache(.functionName = 'prep_rasterToMatch_extendedLandscapeFine')
   }
   mod$dig <- reproducible::CacheDigest(sim$rasterToMatch_extendedLandscapeFine)$outputHash
 
   if (!suppliedElsewhere("rasterToMatch_extendedLandscape", sim)){
     sim$rasterToMatch_extendedLandscape <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine,
                                                             fact = 8)|>
-      Cache(.cacheExtra = mod$dig, omitArgs = 'x')
+      Cache(.cacheExtra = mod$dig, omitArgs = 'x', .functionName = 'prep_rasterToMatch_extendedLandscape')
   }
 
   mod$dig <- c(mod$dig, reproducible::CacheDigest(sim$rasterToMatch_extendedLandscape)$outputHash)
@@ -272,7 +272,7 @@ Init <- function(sim) {
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeCoarse", sim)){
     sim$rasterToMatch_extendedLandscapeCoarse <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine,
                                                                   fact = 16)|>
-      Cache(.cacheExtra = mod$dig, omitArgs = 'x')
+      Cache(.cacheExtra = mod$dig, omitArgs = 'x', .functionName = 'prep_rasterToMatch_extendedLandscapeCoarse')
   }
 
   if (!suppliedElsewhere("rtms", sim)){
@@ -312,18 +312,18 @@ Init <- function(sim) {
                                                        alsoExtract = "similar", fun = "terra::rast",
                                                        to = sim$rasterToMatch_extendedLandscapeFine,
                                                        method = 'near') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'to')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'load_disturbCanLadOldYear')
 
 
   sim$fires <- combine_fire_DB('nbacURL', 'nfdbURL', dPath,
                                sim$studyArea_extendedLandscape,
                                studyAreaName = Par$.studyAreaName,
                                savePath = dataPath(sim)) |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea', .functionName = 'combine_fire_DB')
 
   sim$anthroDisturb <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape,
                                               dataPath = dataPath(sim), source = 'ECCC') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea', .functionName = 'prep_anthroDisturbance')
 
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
