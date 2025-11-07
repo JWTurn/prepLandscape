@@ -293,7 +293,6 @@ Init <- function(sim) {
   }
 
 
-
   sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMSurl"),
                                             destinationPath = dPath,
                                             to = sim$rasterToMatch_extendedLandscapeFine,
@@ -305,7 +304,7 @@ Init <- function(sim) {
                                                        alsoExtract = "similar", fun = "terra::rast",
                                                        to = sim$rasterToMatch_extendedLandscapeFine,
                                                        method = 'near') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'to')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'load_disturbCanLadOldType')
 
   sim$disturbCanLadOldYear <- reproducible::prepInputs(url = extractURL('CanLadOldYearURL'),
                                                        destinationPath = dPath,
