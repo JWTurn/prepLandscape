@@ -57,15 +57,15 @@ defineModule(sim, list(
     expectsInput(objectName = 'buffer', objectClass = 'numeric',
                  desc = 'Buffer for moving windows'),
 
-    expectsInput(objectName = 'harvNTEMSurl', objectClass = 'SpatRaster',
+    expectsInput(objectName = 'harvNTEMS', objectClass = 'SpatRaster',
                  desc = 'harvest history',
                  sourceURL = "https://opendata.nfis.org/downloads/forest_change/CA_Forest_Harvest_1985-2020.zip"),
 
-    expectsInput(objectName = 'CanLadOldTypeURL', objectClass = 'SpatRaster',
+    expectsInput(objectName = 'disturbCanLadOldType', objectClass = 'SpatRaster',
                  desc = 'CanLad disturbance type data before 1985',
                  sourceURL = 'https://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada_disturbances_1965to1984/v1/canlad_1965_1984_disturbanceType.tif'),
 
-    expectsInput(objectName = 'CanLadOldYearURL', objectClass = 'SpatRaster',
+    expectsInput(objectName = 'disturbCanLadOldYear', objectClass = 'SpatRaster',
                  desc = 'CanLad disturbance year data before 1985',
                  sourceURL = 'https://ftp.maps.canada.ca/pub/nrcan_rncan/Forests_Foret/canada_disturbances_1965to1984/v1/canlad_1965_1984_disturbanceYear.tif'),
 
@@ -77,7 +77,10 @@ defineModule(sim, list(
                  desc = 'National Burn Area Composite',
                  sourceURL = 'https://cwfis.cfs.nrcan.gc.ca/downloads/nbac/NBAC_1972to2024_20250506_shp.zip'),
 
-    expectsInput(objectName = 'anthroDisturbance', objectClass = 'SpatVector',
+    expectsInput(objectName = 'fires', objectClass = 'SpatVector',
+                 desc = paste0('SpatVector of fire polygons (combined NBAC and NFDB).')),
+
+    expectsInput(objectName = 'anthroDisturb', objectClass = 'SpatVector',
                  desc = paste0('SpatVector collection of anthropogenic disturbances excluding harvest',
                                ' This includes paved/unpaved linear features and other polygonal disturbances.')),
 
@@ -293,20 +296,20 @@ Init <- function(sim) {
   }
 
 
-  sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMSurl"),
+  sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMS"),
                                             destinationPath = dPath,
                                             to = sim$rasterToMatch_extendedLandscapeFine,
                                             fun = 'terra::rast') |>
     Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'prepInputs_harvNTEMS')
 
-  sim$disturbCanLadOldType <- reproducible::prepInputs(url = extractURL('CanLadOldTypeURL'),
+  sim$disturbCanLadOldType <- reproducible::prepInputs(url = extractURL('disturbCanLadOldType'),
                                                        destinationPath = dPath,
                                                        alsoExtract = "similar", fun = "terra::rast",
                                                        to = sim$rasterToMatch_extendedLandscapeFine,
                                                        method = 'near') |>
     Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'load_disturbCanLadOldType')
 
-  sim$disturbCanLadOldYear <- reproducible::prepInputs(url = extractURL('CanLadOldYearURL'),
+  sim$disturbCanLadOldYear <- reproducible::prepInputs(url = extractURL('disturbCanLadOldYear'),
                                                        destinationPath = dPath,
                                                        alsoExtract = "similar", fun = "terra::rast",
                                                        to = sim$rasterToMatch_extendedLandscapeFine,
