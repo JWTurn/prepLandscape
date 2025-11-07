@@ -318,7 +318,7 @@ Init <- function(sim) {
   sim$fires <- combine_fire_DB('nbacURL', 'nfdbURL', dPath,
                                sim$studyArea_extendedLandscape,
                                studyAreaName = Par$.studyAreaName,
-                               savePath = dataPath(sim)) |>
+                               savePath = NULL) |>
     Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea', .functionName = 'combine_fire_DB')
 
   sim$anthroDisturb <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape,
