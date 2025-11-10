@@ -7,7 +7,7 @@ make_landforest_prop <- function(targetFile, trast, buff, where2save = NULL){
   landRaw <- terra::rast(targetFile)
   land <- reproducible::postProcess(landRaw, cropTo=terra::buffer(trast, width = 10000))# |>
   # Cache()
-
+  message('landscape cropped')
 
   # What to buffer for proportion of landclasses
   # set classes to all those that aren't no data (0)
@@ -15,9 +15,11 @@ make_landforest_prop <- function(targetFile, trast, buff, where2save = NULL){
   lccClasses <- c(20, 31, 32, 33, 40, 50, 80, 81, 100, 210, 220, 230)
 
   land.seg <- terra::segregate(land, classes = lccClasses) #creates 1 file with diff layers, then focal on whole thing
+  message('landclasses segregated')
+
 
   propLand <- reproducible::postProcess(land.seg, to = trast, method = 'average')
-
+  message('postProcessed propLandcover')
 
   ## This creates an object which can be used to make a layer of specified diameter
   # The d value is what determines the buffer size if you want to change it.
@@ -28,7 +30,7 @@ make_landforest_prop <- function(targetFile, trast, buff, where2save = NULL){
 
   gc()
   propLandFocal <- focal(propLand, Buff, na.rm = TRUE, pad = TRUE, padValue = 0)
-
+  message('made moving window proportions')
 
 
 
