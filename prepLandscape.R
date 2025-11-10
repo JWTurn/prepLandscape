@@ -251,15 +251,15 @@ Init <- function(sim) {
   }
 
   if (!suppliedElsewhere("studyArea_extendedLandscape", sim)){
-    sim$studyArea_extendedLandscape <- terra::buffer(sim$studyArea, 100000) |>
+    sim$studyArea_extendedLandscape <- terra::buffer(sim$studyArea, 50000) |>
       Cache(.functionName = 'prep_studyArea_extendedLandscape')
   }
 
   sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMS"),
                                             destinationPath = dPath,
-                                            to = sim$rasterToMatch_extendedLandscapeFine,
+                                            to = sim$studyArea_extendedLandscape,
                                             fun = 'terra::rast') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'prepInputs_harvNTEMS')
+    Cache(.functionName = 'prepInputs_harvNTEMS')
 
 
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeFine", sim)){
