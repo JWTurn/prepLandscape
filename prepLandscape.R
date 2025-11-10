@@ -255,9 +255,16 @@ Init <- function(sim) {
       Cache(.functionName = 'prep_studyArea_extendedLandscape')
   }
 
+  sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMS"),
+                                            destinationPath = dPath,
+                                            to = sim$rasterToMatch_extendedLandscapeFine,
+                                            fun = 'terra::rast') |>
+    Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'prepInputs_harvNTEMS')
+
+
   if (!suppliedElsewhere("rasterToMatch_extendedLandscapeFine", sim)){
-    sim$rasterToMatch_extendedLandscapeFine <- terra::rast(sim$studyArea_extendedLandscape,
-                                                           res = c(30, 30), vals = 1)
+    sim$rasterToMatch_extendedLandscapeFine <- terra::rasterize(sim$studyArea_extendedLandscape,
+                                                           sim$harvNTEMS, vals = 1)
     sim$rasterToMatch_extendedLandscapeFine <- terra::mask(sim$rasterToMatch_extendedLandscapeFine,
                                                            sim$studyArea_extendedLandscape)|>
       Cache(.functionName = 'prep_rasterToMatch_extendedLandscapeFine')
@@ -287,7 +294,7 @@ Init <- function(sim) {
 
 
   if (!suppliedElsewhere("buffer", sim)){
-    sim$buffer <- 750
+    sim$buffer <- 720
   }
 
   if (!suppliedElsewhere("rtmFuns", sim)){
@@ -296,11 +303,6 @@ Init <- function(sim) {
   }
 
 
-  sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMS"),
-                                            destinationPath = dPath,
-                                            to = sim$rasterToMatch_extendedLandscapeFine,
-                                            fun = 'terra::rast') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'prepInputs_harvNTEMS')
 
   sim$disturbCanLadOldType <- reproducible::prepInputs(url = extractURL('disturbCanLadOldType'),
                                                        destinationPath = dPath,
