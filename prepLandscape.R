@@ -119,92 +119,100 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       # load disturbances
       ##### FIRES ----
 
-      mod$histFire <- make_timeSinceDisturb_rast(layer = sim$fires, rast = sim$rasterToMatch_extendedLandscape,
-                                                 disturbanceType = 'Fire',
-                                                 minyr = min(P(sim)$histLandYears), #maxyr = max(P(sim)$histLandYears),
-                                                 backgrndYear = P(sim)$backgroundYr, where2save = NULL) |>
-        Cache(.cacheExtra = mod$dig, omitArgs = 'rast', .functionName = 'makeTimeSinceFire')
-
-      ##### HARVEST -----
-      sim$harvNTEMS[sim$harvNTEMS==0]<-NA
-
-      # get before 1985 harvest from CanLaD -- get year only for harv
-      disturbCanLadOldHarvYearFine <- terra::mask(sim$disturbCanLadOldYear, terra::match(sim$disturbCanLadOldType, 3)) |>
-        Cache(.functionName = 'makeCanLadHarvOldFine')
-      disturbCanLadOldHarvYear <- reproducible::postProcess(disturbCanLadOldHarvYearFine, to = sim$rasterToMatch_extendedLandscape)|>
-        Cache(.functionName = 'makeCanLadHarvOld')
-      message('gathered before 1985 harvest from CanLaD')
-
-      # add recent harvest after NTEMS
-
-      maxHarvNTEMS <- (max(terra::values(sim$harvNTEMS), na.rm = T)+1)
-      newYears <-  seq(maxHarvNTEMS, max(P(sim)$histLandYears))
-
-      newHarvRast <- make_CanLad_cumulative(yrs = newYears, disturbTypeCode = 2,
-                                            dPath = dPath, rtm = sim$rasterToMatch_extendedLandscape) |>
-        Cache(.cacheExtra = mod$dig, omitArgs = 'rtm', .functionName = 'makeNewHarvRast')
-      message('add recent harvest after NTEMS')
-
-      # combine all types together
-
-      harvNTEMScoarse <- reproducible::postProcess(sim$harvNTEMS, to = sim$rasterToMatch_extendedLandscape)|>
-        Cache(.functionName = 'makeHarvNTEMScoarse')
-
-      harvs <- c(disturbCanLadOldHarvYear, harvNTEMScoarse, newHarvRast)
-      names(harvs) <- c('CanLadOld', 'NTEMS', 'CanLadNew')
-
-      timeSinceHarvest <- Map(nn = paste0('year', P(sim)$histLandYears), yr = P(sim)$histLandYears,
-                              rtm = sim$rasterToMatch_extendedLandscape, background = P(sim)$backgroundYr,
-                              function(nn, yr, rtm, background){
-
-
-                                harvsYrPos <- clamp(harvs, upper = yr, value = F)
-                                maxRast <- max(harvsYrPos, na.rm = T)
-                                timeSince <- yr - maxRast
-                                backgrnd <- yr - background
-                                timeSinceFill <- mask(ifel(is.na(timeSince), backgrnd, timeSince), rtm)
-                                names(timeSinceFill) <- 'timeSinceHarvest'
-                                return(timeSinceFill)
-                              })|>
-        Cache(.cacheExtra = mod$dig, omitArgs = 'rtm', .functionName = 'prep_timeSinceHarv')
-
-      message('combine all harvest data')
-
-      #rtmsDigest <- .robustDigest(rtms)
-      # names(P(sim)$historicLandYears) <- P(sim)$historicLandYears
-
+      # mod$histFire <- make_timeSinceDisturb_rast(layer = sim$fires, rast = sim$rasterToMatch_extendedLandscape,
+      #                                            disturbanceType = 'Fire',
+      #                                            minyr = min(P(sim)$histLandYears), #maxyr = max(P(sim)$histLandYears),
+      #                                            backgrndYear = P(sim)$backgroundYr, where2save = NULL) |>
+      #   Cache(.cacheExtra = mod$dig, omitArgs = 'rast', .functionName = 'makeTimeSinceFire')
+      #
+      # ##### HARVEST -----
+      # sim$harvNTEMS[sim$harvNTEMS==0]<-NA
+      #
+      # # get before 1985 harvest from CanLaD -- get year only for harv
+      # disturbCanLadOldHarvYearFine <- terra::mask(sim$disturbCanLadOldYear, terra::match(sim$disturbCanLadOldType, 3)) |>
+      #   Cache(.functionName = 'makeCanLadHarvOldFine')
+      # disturbCanLadOldHarvYear <- reproducible::postProcess(disturbCanLadOldHarvYearFine, to = sim$rasterToMatch_extendedLandscape)|>
+      #   Cache(.functionName = 'makeCanLadHarvOld')
+      # message('gathered before 1985 harvest from CanLaD')
+      #
+      # # add recent harvest after NTEMS
+      #
+      # maxHarvNTEMS <- (max(terra::values(sim$harvNTEMS), na.rm = T)+1)
+      # newYears <-  seq(maxHarvNTEMS, max(P(sim)$histLandYears))
+      #
+      # newHarvRast <- make_CanLad_cumulative(yrs = newYears, disturbTypeCode = 2,
+      #                                       dPath = dPath, rtm = sim$rasterToMatch_extendedLandscape) |>
+      #   Cache(.cacheExtra = mod$dig, omitArgs = 'rtm', .functionName = 'makeNewHarvRast')
+      # message('add recent harvest after NTEMS')
+      #
+      # # combine all types together
+      #
+      # harvNTEMScoarse <- reproducible::postProcess(sim$harvNTEMS, to = sim$rasterToMatch_extendedLandscape)|>
+      #   Cache(.functionName = 'makeHarvNTEMScoarse')
+      #
+      # harvs <- c(disturbCanLadOldHarvYear, harvNTEMScoarse, newHarvRast)
+      # names(harvs) <- c('CanLadOld', 'NTEMS', 'CanLadNew')
+      #
+      # timeSinceHarvest <- Map(nn = paste0('year', P(sim)$histLandYears), yr = P(sim)$histLandYears,
+      #                         rtm = sim$rasterToMatch_extendedLandscape, background = P(sim)$backgroundYr,
+      #                         function(nn, yr, rtm, background){
+      #
+      #
+      #                           harvsYrPos <- clamp(harvs, upper = yr, value = F)
+      #                           maxRast <- max(harvsYrPos, na.rm = T)
+      #                           timeSince <- yr - maxRast
+      #                           backgrnd <- yr - background
+      #                           timeSinceFill <- mask(ifel(is.na(timeSince), backgrnd, timeSince), rtm)
+      #                           names(timeSinceFill) <- 'timeSinceHarvest'
+      #                           return(timeSinceFill)
+      #                         })|>
+      #   Cache( .functionName = 'prep_timeSinceHarv')
+      #
+      # message('combine all harvest data')
+      #
+      # #rtmsDigest <- .robustDigest(rtms)
+      # # names(P(sim)$historicLandYears) <- P(sim)$historicLandYears
+      #
+      # if (!is.null(sim$rtmFuns)){
+      #   sim$rtmFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
+      #                           sim$buffer,', where2save = NULL)'))
+      # }
+      #
+      #
+      # mod$histLand <- Map(rtmname = names(sim$rtms), rtm = sim$rtms,
+      #                     #rtmDigest = rtmsDigest,
+      #                     rtmFun = sim$rtmFuns, function(rtm, rtmname, rtmFun) {
+      #
+      #                      Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
+      #                        propWindow <- reproducible::prepInputs(
+      #                           url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
+      #                           destinationPath = dPath, # end pre process
+      #                           fun = eval(parse(text = rtmFun)), # end process
+      #                           rtm = rtm) |>
+      #                          Cache(.functionName = paste0(rtmname, ii, '_propLand'))
+      #
+      #                         return(propWindow)
+      #                       })
+      #
+      #                     })|>
+      #   Cache()
+      #
+      # # could also set a rule of check if file looking for in drive, download if is, or make here
+      # sim$landscapeYearly <- Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
+      #   yearly <- c(mod$histLand[[names(sim$rtms)[[1]]]][[nn]],
+      #               timeSinceHarvest[[nn]], mod$histFire[[nn]])
+      #   #writeRaster(yearly, file.path(dataPath(sim), P(sim)$.studyAreaName, paste0('yearly_', names(sim$rtms)[[1]], '_', ii, '.tif')))
+      #   return(yearly)
+      # }) |>
+      #   Cache(.functionName = 'prep_landscapeYearly') # useCloud only works for exact studyArea
       if (!is.null(sim$rtmFuns)){
         sim$rtmFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
                                 sim$buffer,', where2save = NULL)'))
       }
 
-
-      mod$histLand <- Map(rtmname = names(sim$rtms), rtm = sim$rtms,
-                          #rtmDigest = rtmsDigest,
-                          rtmFun = sim$rtmFuns, function(rtm, rtmname, rtmFun) {
-
-                           Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
-                             propWindow <- reproducible::prepInputs(
-                                url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
-                                destinationPath = dPath, # end pre process
-                                fun = eval(parse(text = rtmFun)), # end process
-                                rtm = rtm) |>
-                               Cache(.functionName = paste0(rtmname, ii, '_propLand'))
-
-                              return(propWindow)
-                            })
-
-                          })|>
-        Cache(.functionName = 'make_histLand')
-
-      # could also set a rule of check if file looking for in drive, download if is, or make here
-      sim$landscapeYearly <- Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
-        yearly <- c(mod$histLand[[names(sim$rtms)[[1]]]][[nn]],
-                    timeSinceHarvest[[nn]], mod$histFire[[nn]])
-        #writeRaster(yearly, file.path(dataPath(sim), P(sim)$.studyAreaName, paste0('yearly_', names(sim$rtms)[[1]], '_', ii, '.tif')))
-        return(yearly)
-      }) |>
-        Cache(.functionName = 'prep_landscapeYearly') # useCloud only works for exact studyArea
+      landscapeYearly <- prep_everything(Par$histLandYears, sim$fires, sim$rasterToMatch_extendedLandscape, sim$rtms, sim$rtmFuns, Par$backgroundYr,
+                                             sim$harvNTEMS, sim$disturbCanLadOldYear, sim$disturbCanLadOldType, mod$dig, dPath)|>
+        Cache(.functionName = 'prep_yearly', .cacheExtra = mod$dig, omitArgs = c('rasterToMatch', 'rtms')) # TODO add useCloud = TRUE when run full
 
       sim$landscape5Yearly <- sim$anthroDisturb
 
