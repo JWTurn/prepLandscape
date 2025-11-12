@@ -205,14 +205,18 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       #   return(yearly)
       # }) |>
       #   Cache(.functionName = 'prep_landscapeYearly') # useCloud only works for exact studyArea
-      if (!is.null(sim$rtmFuns)){
+      if (is.null(sim$rtmFuns)){
         sim$rtmFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
                                 sim$buffer,', where2save = NULL)'))
       }
 
-      landscapeYearly <- prep_everything(Par$histLandYears, sim$fires, sim$rasterToMatch_extendedLandscape, sim$rtms, sim$rtmFuns, Par$backgroundYr,
-                                             sim$harvNTEMS, sim$disturbCanLadOldYear, sim$disturbCanLadOldType, mod$dig, dPath)|>
+      landscapeYearly <- prep_everything(Par$histLandYears, sim$fires, sim$rasterToMatch_extendedLandscape,
+                                         sim$rtms, sim$rtmFuns, Par$backgroundYr,
+                                         sim$harvNTEMS, sim$disturbCanLadOldYear, sim$disturbCanLadOldType, mod$dig, dPath)|>
         Cache(.functionName = 'prep_yearly', .cacheExtra = mod$dig, omitArgs = c('rasterToMatch', 'rtms')) # TODO add useCloud = TRUE when run full
+
+      list2env(landscapeYearly, envir = envir(sim)) # moving harvNTEMS and landscapeYearly into sim
+
 
       sim$landscape5Yearly <- sim$anthroDisturb
 
@@ -339,7 +343,7 @@ Init <- function(sim) {
 
   sim$anthroDisturb <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape,
                                               dataPath = dataPath(sim), source = 'ECCC') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea', .functionName = 'prep_anthroDisturbance')
+    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea', .functionName = 'prep_anthroDisturbance', useCloud = T)
 
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
