@@ -177,16 +177,16 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
                           #rtmDigest = rtmsDigest,
                           rtmFun = sim$rtmFuns, function(rtm, rtmname, rtmFun) {
 
-                           propWindow<-  Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
-                              reproducible::prepInputs(
+                           Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
+                             propWindow <- reproducible::prepInputs(
                                 url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
                                 destinationPath = dPath, # end pre process
-                                fun = eval(rtmFun), # end process
+                                fun = eval(parse(text = rtmFun)), # end process
                                 rtm = rtm) |>
-                                #writeTo = file.path(dataPath(sim), paste0('propLand_', rtmname, '_', ii, '.tif'))) |> ## TODO set name
-                                Cache(.functionName = paste0(rtmname, ii, '_propLand'))
+                               Cache(.functionName = paste0(rtmname, ii, '_propLand'))
+
+                              return(propWindow)
                             })
-                           return(propWindow)
 
                           })|>
         Cache(.functionName = 'make_histLand')
