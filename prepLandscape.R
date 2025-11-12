@@ -173,6 +173,12 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       #rtmsDigest <- .robustDigest(rtms)
       # names(P(sim)$historicLandYears) <- P(sim)$historicLandYears
 
+      if (!is.null(sim$rtmFuns)){
+        sim$rtmFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
+                                sim$buffer,', where2save = NULL)'))
+      }
+
+
       mod$histLand <- Map(rtmname = names(sim$rtms), rtm = sim$rtms,
                           #rtmDigest = rtmsDigest,
                           rtmFun = sim$rtmFuns, function(rtm, rtmname, rtmFun) {
@@ -191,13 +197,14 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
                           })|>
         Cache(.functionName = 'make_histLand')
 
+      # could also set a rule of check if file looking for in drive, download if is, or make here
       sim$landscapeYearly <- Map(nn = paste0('year', P(sim)$histLandYears), ii=P(sim)$histLandYears, function(nn,ii){
         yearly <- c(mod$histLand[[names(sim$rtms)[[1]]]][[nn]],
                     timeSinceHarvest[[nn]], mod$histFire[[nn]])
-        writeRaster(yearly, file.path(dataPath(sim), P(sim)$.studyAreaName, paste0('yearly_', names(sim$rtms)[[1]], '_', ii, '.tif')))
+        #writeRaster(yearly, file.path(dataPath(sim), P(sim)$.studyAreaName, paste0('yearly_', names(sim$rtms)[[1]], '_', ii, '.tif')))
         return(yearly)
       }) |>
-        Cache(.functionName = 'prep_landscapeYearly')
+        Cache(.functionName = 'prep_landscapeYearly') # useCloud only works for exact studyArea
 
       sim$landscape5Yearly <- sim$anthroDisturb
 
@@ -297,11 +304,6 @@ Init <- function(sim) {
 
   if (!suppliedElsewhere("buffer", sim)){
     sim$buffer <- 720
-  }
-
-  if (!suppliedElsewhere("rtmFuns", sim)){
-    sim$rtmFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
-                            sim$buffer,', where2save = NULL)'))
   }
 
 
