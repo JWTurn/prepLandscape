@@ -17,7 +17,8 @@ prep_everything <- function(histLandYears, fires, rasterToMatch, rtms, rtmFuns, 
   disturbCanLadOldHarvYearFine <- terra::mask(disturbCanLadOldYear, terra::match(disturbCanLadOldType, 3)) |>
     Cache(.functionName = 'makeCanLadHarvOldFine')
   disturbCanLadOldHarvYear <- reproducible::postProcess(disturbCanLadOldHarvYearFine, to = rasterToMatch)|>
-    Cache(.functionName = 'makeCanLadHarvOld')
+    Cache(.functionName = 'makeCanLadHarvOld', .cacheExtra = list(dig, attr(disturbCanLadOldHarvYearFine, 'tags')),
+          omitArgs = c('to', 'x'))
   message('gathered before 1985 harvest from CanLaD')
 
   # add recent harvest after NTEMS
@@ -33,7 +34,7 @@ prep_everything <- function(histLandYears, fires, rasterToMatch, rtms, rtmFuns, 
   # combine all types together
 
   harvNTEMScoarse <- reproducible::postProcess(harvNTEMS, to = rasterToMatch)|>
-    Cache(.functionName = 'makeHarvNTEMScoarse')
+    Cache(.functionName = 'makeHarvNTEMScoarse', .cacheExtra = dig, omitArgs = 'to')
 
   harvs <- c(disturbCanLadOldHarvYear, harvNTEMScoarse, newHarvRast)
   names(harvs) <- c('CanLadOld', 'NTEMS', 'CanLadNew')
@@ -76,11 +77,11 @@ prep_everything <- function(histLandYears, fires, rasterToMatch, rtms, rtmFuns, 
                     })
 
                   })|>
-    Cache(.functionName = 'make_histLand')
+    Cache(.functionName = 'make_histLand', .cacheExtra = dig, omitArgs = 'rtm')
 
   # could also set a rule of check if file looking for in drive, download if is, or make here
   landscapeYearly <- Map(nn = paste0('year', histLandYears), ii=histLandYears, function(nn,ii){
-   browser()
+
      yearly <- c(histLand[[names(rtms)[[1]]]][[nn]],
                 timeSinceHarvest[[nn]], histFire[[nn]])
 
