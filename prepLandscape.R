@@ -213,7 +213,7 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       landscapeYearly <- prep_everything(Par$histLandYears, sim$fires, sim$rasterToMatch_extendedLandscape,
                                          sim$rtms, sim$rtmFuns, Par$backgroundYr,
                                          sim$harvNTEMS, sim$disturbCanLadOldYear, sim$disturbCanLadOldType, mod$dig, dPath)|>
-        Cache(.functionName = 'prep_yearly', .cacheExtra = mod$dig, omitArgs = c('rasterToMatch', 'rtms')) # TODO add useCloud = TRUE when run full
+        Cache(.functionName = 'prep_yearly', .cacheExtra = mod$dig, omitArgs = c('rasterToMatch', 'rtms'), useCloud = T)
 
       list2env(landscapeYearly, envir = envir(sim)) # moving harvNTEMS and landscapeYearly into sim
 
