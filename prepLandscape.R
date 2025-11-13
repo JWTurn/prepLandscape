@@ -343,7 +343,7 @@ Init <- function(sim) {
 
   sim$anthroDisturb <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape,
                                               dataPath = dataPath(sim), source = 'ECCC') |>
-    Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea', .functionName = 'prep_anthroDisturbance', useCloud = T)
+    Cache(.cacheExtra = mod$dig, omitArgs = c('studyArea', 'inputsPath', 'dataPath'), .functionName = 'prep_anthroDisturbance', useCloud = T)
 
   # ! ----- STOP EDITING ----- ! #
   return(invisible(sim))
