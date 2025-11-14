@@ -279,7 +279,8 @@ Init <- function(sim) {
   sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMS"),
                                             destinationPath = dPath,
                                             to = sim$studyArea_extendedLandscape,
-                                            fun = 'terra::rast') |>
+                                            fun = 'terra::rast',
+                                            method = 'near') |>
     Cache(.functionName = 'prepInputs_harvNTEMS')
 
 
