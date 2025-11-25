@@ -4,14 +4,14 @@
 
 combine_fire_DB <- function(nbacURL, nfdbURL, dPath, studyArea, studyAreaName = NULL, savePath = NULL){
   
-  nbac <- reproducible::prepInputs(url = extractURL(nbacURL),
+  nbac <- reproducible::prepInputs(url = nbacURL,
                                    destinationPath = dPath,
                                    #targetFile = "NBAC_1972to2024_20250506.shp",  
                                    alsoExtract = "similar", fun = "terra::vect",
                                    to = studyArea) |>
     Cache()
   
-  nfdb <- reproducible::prepInputs(url = extractURL(nfdbURL),
+  nfdb <- reproducible::prepInputs(url = nfdbURL,
                                    destinationPath = dPath,
                                    #targetFile = "NFDB_poly_20210707.shp",  
                                    alsoExtract = "similar", fun = "terra::vect",
