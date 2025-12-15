@@ -47,7 +47,7 @@ defineModule(sim, list(
                                                      sim$buffer,', where2save = NULL)')), NA, NA,
                     paste0("List functions to apply to rasters for moving windows or not.",
                            " Currently only applies to landcover")) #TODO Either a list or not...
-    
+
   ),
   inputObjects = bindrows(
     expectsInput(objectName = 'studyArea', objectClass = 'SpatVector',
@@ -124,15 +124,15 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
       sim <- scheduleEvent(sim, P(sim)$.plotInitialTime, "prepLandscape", "createLayers")
     },
     createLayers = {
-      
+
       dPath <- inputPath(sim)
-      
+
       if (is.null(sim$studyArea_extendedLandscape)){
         message("Creating studyArea_extendedLandscape...")
         sim$studyArea_extendedLandscape <- terra::buffer(sim$studyArea, 50000) |>
           Cache(.functionName = 'prep_studyArea_extendedLandscape')
       }
-      
+
       if (is.null(sim$harvNTEMS)){
         message("Creating harvNTEMS...")
         sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMS"),
@@ -142,7 +142,7 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
                                                   method = 'near') |>
           Cache(.functionName = 'prepInputs_harvNTEMS')
       }
-      
+
       if (is.null(sim$rasterToMatch_extendedLandscapeFine)){
         message("Creating rasterToMatch_extendedLandscapeFine...")
         sim$rasterToMatch_extendedLandscapeFine <- terra::rasterize(sim$studyArea_extendedLandscape,
@@ -152,34 +152,37 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
           Cache(.functionName = 'prep_rasterToMatch_extendedLandscapeFine')
       }
       mod$dig <- reproducible::CacheDigest(sim$rasterToMatch_extendedLandscapeFine)$outputHash
-      
+
       if (is.null(sim$rasterToMatch_extendedLandscape)){
         message("Creating rasterToMatch_extendedLandscape...")
         sim$rasterToMatch_extendedLandscape <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine,
                                                                 fact = 8)|>
           Cache(.cacheExtra = mod$dig, omitArgs = 'x', .functionName = 'prep_rasterToMatch_extendedLandscape')
       }
-      
+
       mod$dig <- c(mod$dig, reproducible::CacheDigest(sim$rasterToMatch_extendedLandscape)$outputHash)
-      
+
       if (is.null(sim$rasterToMatch_extendedLandscapeCoarse)){
         message("Creating rasterToMatch_extendedLandscapeCoarse...")
         sim$rasterToMatch_extendedLandscapeCoarse <- terra::aggregate(sim$rasterToMatch_extendedLandscapeFine,
                                                                       fact = 16)|>
           Cache(.cacheExtra = mod$dig, omitArgs = 'x', .functionName = 'prep_rasterToMatch_extendedLandscapeCoarse')
       }
-      
+
       if (is.null(sim$rtms)){
         message("Creating rtms...")
         sim$rtms <- list(sim$rasterToMatch_extendedLandscape)
         names(sim$rtms) <- c('window240')
         mod$dig <- c(mod$dig, reproducible::CacheDigest(names(sim$rtms))$outputHash)
       }
-      
+
       if (is.null(sim$buffer)){
         sim$buffer <- 720
       }
-      
+
+      sim$rtmFuns <- c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
+                              sim$buffer,', where2save = NULL)'))
+
       if (is.null(sim$disturbCanLadOldType)){
         message("Creating disturbCanLadOldType...")
         sim$disturbCanLadOldType <- reproducible::prepInputs(url = extractURL('disturbCanLadOldType'),
@@ -189,7 +192,7 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
                                                              method = 'near') |>
           Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'load_disturbCanLadOldType')
       }
-      
+
       if (is.null(sim$disturbCanLadOldYear)){
         message("Creating disturbCanLadOldYear...")
         sim$disturbCanLadOldYear <- reproducible::prepInputs(url = extractURL('disturbCanLadOldYear'),
@@ -199,7 +202,7 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
                                                              method = 'near') |>
           Cache(.cacheExtra = mod$dig, omitArgs = 'to', .functionName = 'load_disturbCanLadOldYear')
       }
-      
+
       if (is.null(sim$fires)){
         message("Creating fires...")
         sim$fires <- combine_fire_DB(P(sim)$nbacURL, P(sim)$nfdbURL, dPath,
@@ -208,15 +211,15 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
                                      savePath = NULL) |>
           Cache(.cacheExtra = mod$dig, omitArgs = 'studyArea', .functionName = 'combine_fire_DB')
       }
-      
+
       if (is.null(sim$anthroDisturb)){
         message("Creating anthropogenic disturbance layers...")
         sim$anthroDisturb <- prep_anthroDisturbance(inputsPath = dPath, studyArea = sim$studyArea_extendedLandscape,
                                                     dataPath = dataPath(sim), source = 'ECCC') |>
-          Cache(.cacheExtra = mod$dig, omitArgs = c('studyArea', 'inputsPath', 'dataPath'), 
+          Cache(.cacheExtra = mod$dig, omitArgs = c('studyArea', 'inputsPath', 'dataPath'),
                 .functionName = 'prep_anthroDisturbance', useCloud = TRUE)
       }
-      
+
       sim$landscapeYearly <- prep_everything(Par$histLandYears, sim$fires, sim$rasterToMatch_extendedLandscape,
                                          sim$rtms, sim$rtmFuns, Par$backgroundYr,
                                          sim$harvNTEMS, sim$disturbCanLadOldYear, sim$disturbCanLadOldType, mod$dig, dPath)|>

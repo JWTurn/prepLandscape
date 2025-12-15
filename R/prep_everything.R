@@ -58,36 +58,56 @@ prep_everything <- function(histLandYears, fires, rasterToMatch, rtms, rtmFuns, 
 
   #rtmsDigest <- .robustDigest(rtms)
   # names(historicLandYears) <- historicLandYears
+  histLand <- Map(
+    rtmname = names(rtms),
+    rtm = rtms,
+    rtmFun = rtmFuns,
+    function(rtm, rtmname, rtmFun) {
 
+    output <-   Map(nn = paste0('year', histLandYears), ii = histLandYears, function(nn, ii) {
 
+        propWindow <- reproducible::prepInputs(
+          url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
+          destinationPath = dPath,
+          fun = eval(parse(text = rtmFun)),
+          rtm = rtm
+        ) |>
+          Cache(.functionName = paste0(rtmname, ii, '_propLand'))
 
-  histLand <- Map(rtmname = names(rtms), rtm = rtms,
-                  #rtmDigest = rtmsDigest,
-                  rtmFun = rtmFuns, function(rtm, rtmname, rtmFun) {
-
-                    Map(nn = paste0('year', histLandYears), ii=histLandYears, function(nn,ii){
-                      propWindow <- reproducible::prepInputs(
-                        url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
-                        destinationPath = dPath, # end pre process
-                        fun = eval(parse(text = rtmFun)), # end process
-                        rtm = rtm) |>
-                        Cache(.functionName = paste0(rtmname, ii, '_propLand'))
-
-                      return(propWindow)
-                    })
-
-                  })|>
+        return(propWindow)
+      })
+    return(output)
+    }
+  ) |>
     Cache(.functionName = 'make_histLand', .cacheExtra = dig, omitArgs = 'rtm')
 
   # could also set a rule of check if file looking for in drive, download if is, or make here
-  landscapeYearly <- Map(nn = paste0('year', histLandYears), ii=histLandYears, function(nn,ii){
+  landscapeYearly <- Map(
+    nn = paste0("year", histLandYears),
+    ii = histLandYears,
+    function(nn, ii) {
 
-     yearly <- c(histLand[[names(rtms)[[1]]]][[nn]],
-                timeSinceHarvest[[nn]], histFire[[nn]])
+      # Extract the multi-layer SpatRaster containing prop_* layers
+      multi <- histLand[[ names(histLand)[1] ]][[nn]]
 
-    return(yearly)
-  }) |>
-    Cache(.functionName = 'prep_landscapeYearly')
+      # Split into single-layer rasters
+      propLayers <- lapply(seq_len(terra::nlyr(multi)), function(i) multi[[i]])
+      names(propLayers) <- names(multi)
 
-  return(list(harvNTEMS = harvNTEMS, landscapeYearly = landscapeYearly))
+      # Extract time-since rasters
+      tsh <- timeSinceHarvest[[nn]]
+      tsf <- histFire[[nn]]
+
+      # Build final list with explicit list element names
+      yearly <- terra::rast(c(
+        propLayers,
+        list(timeSinceHarvest = tsh),
+        list(timeSinceFire = tsf)))
+
+      return(yearly)
+    }
+  )|> Cache(.functionName = 'prep_landscapeYearly')
+
+
+  return(landscapeYearly)
 }
