@@ -50,7 +50,7 @@ defineModule(sim, list(
 
   ),
   inputObjects = bindrows(
-    expectsInput(objectName = 'studyArea', objectClass = 'SpatVector',
+    expectsInput(objectName = 'studyAreaCaribou', objectClass = 'SpatVector',
                  desc = 'Study area of telemetry data + herd areas',
                  sourceURL = 'https://drive.google.com/file/d/1iq1f53pAtZFIFoN1RFhlXEghSbvI3Dnf/view?usp=share_link'),
     expectsInput(objectName = 'studyArea_extendedLandscape', objectClass = 'SpatVector',
@@ -81,11 +81,11 @@ defineModule(sim, list(
                  desc = paste0("List of template rasters. Only 1 if working at one resolution."))
   ),
   outputObjects = bindrows(
-    createsOutput(objectName = 'landscapeYearly', objectClass = 'spatRaster',
+    createsOutput(objectName = 'landscapeYearly', objectClass = 'SpatRaster',
                   desc = 'spatRaster stack of the yearly landscape layers'),
-    createsOutput(objectName = 'landscape5Yearly', objectClass = 'spatRaster',
-                  desc = 'spatRaster stack of the 5 yearly landscape layers'),
-    createsOutput(objectName = 'studyArea', objectClass = 'SpatVector',
+    createsOutput(objectName = 'landscape5Yearly', objectClass = 'SpatRaster',
+                  desc = 'SpatRaster stacks of the 5 year interval anthropogenic landscape layers'),
+    createsOutput(objectName = 'studyAreaCaribou', objectClass = 'SpatVector',
                  desc = 'Study area of telemetry data + herd areas'),
     createsOutput(objectName = 'studyArea_extendedLandscape', objectClass = 'SpatVector',
                  desc = 'Extended study area for prepping landscape layers'),
@@ -129,17 +129,17 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
 
       if (is.null(sim$studyArea_extendedLandscape)){
         message("Creating studyArea_extendedLandscape...")
-        sim$studyArea_extendedLandscape <- terra::buffer(sim$studyArea, 50000) |>
+        sim$studyArea_extendedLandscape <- terra::buffer(sim$studyAreaCaribou, 50000) |>
           Cache(.functionName = 'prep_studyArea_extendedLandscape')
       }
-
       if (is.null(sim$harvNTEMS)){
         message("Creating harvNTEMS...")
         sim$harvNTEMS <- reproducible::prepInputs(url = extractURL("harvNTEMS"),
                                                   destinationPath = dPath,
                                                   to = sim$studyArea_extendedLandscape,
                                                   fun = 'terra::rast',
-                                                  method = 'near') |>
+                                                  method = 'near'
+                                                  ) |>
           Cache(.functionName = 'prepInputs_harvNTEMS')
       }
 
