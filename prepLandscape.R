@@ -8,7 +8,7 @@ defineModule(sim, list(
   name = "prepLandscape",
   description = "This module prepares landscape layers for habitat selection analyses",
   keywords = "",
-  authors = structure(list(list(given = c("Julie", "W"), family = "Turner", role = c("aut", "cre"), email = "email@example.com", comment = NULL)), class = "person"),
+  authors = structure(list(list(given = c("Julie", "W"), family = "Turner", role = c("aut", "cre"), email = "julwturner@gmail.com", comment = NULL)), class = "person"),
   childModules = character(0),
   version = list(prepLandscape = "0.0.0.9000"),
   timeframe = as.POSIXlt(c(NA, NA)),
