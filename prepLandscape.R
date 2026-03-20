@@ -43,6 +43,8 @@ defineModule(sim, list(
                     "URL for NBAC (National Burn Area Composite) fire database"),
     defineParameter("nfdbURL", "character", 'https://cwfis.cfs.nrcan.gc.ca/downloads/nfdb/fire_poly/current_version/NFDB_poly.zip', NA, NA,
                     "URL for National Fire Data Base (NFDB) for back filling NBAC"),
+    defineParameter("ecoregionURL", "character", 'https://drive.google.com/drive/folders/1QfR2oKbf_lZYQtRLeTL-wI_2fEwtjbMX', NA, NA,
+                    "URL for National ecoregion layer"),
     defineParameter("rtmFuns", "character", c(paste0('make_landforest_prop(targetFile = targetFile, trast = rtm, buff = ',
                                                      sim$buffer,', where2save = NULL)')), NA, NA,
                     paste0("List functions to apply to rasters for moving windows or not.",
@@ -109,7 +111,9 @@ defineModule(sim, list(
     createsOutput("rasterToMatch_extendedLandscapeCoarse", "SpatRaster",
                  desc = paste("A coarser raster to match of the study area plus large bufferto caluculate proportions of landcover.")),
     createsOutput("rtms", "list",
-                 desc = paste0("List of template rasters. Only 1 if working at one resolution."))
+                 desc = paste0("List of template rasters. Only 1 if working at one resolution.")),
+    createsOutput('ecoregion', 'SpatVector',
+                  desc = 'A national ecoregion layer to be used in the extraction module')
   )
 ))
 
@@ -218,6 +222,14 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
                                                     dataPath = dataPath(sim), source = 'ECCC') |>
           Cache(.cacheExtra = mod$dig, omitArgs = c('studyArea', 'inputsPath', 'dataPath'),
                 .functionName = 'prep_anthroDisturbance', useCloud = TRUE)
+      }
+
+      if (is.null(sim$ecoregion)){
+        message("Downloading ecoregion layer... ")
+        sim$ecoregion <- reproducible::prepInputs(url = Par$ecoregionURL,
+                                                  destinationPath = dPath,
+                                                  targetFile = "ecoregions",
+                                                  fun = terra::vect(x = targetFile, crs = "EPSG:3978"))
       }
 
       sim$landscapeYearly <- prep_everything(Par$histLandYears, sim$fires, sim$rasterToMatch_extendedLandscape,
