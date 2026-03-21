@@ -228,8 +228,9 @@ doEvent.prepLandscape = function(sim, eventTime, eventType) {
         message("Downloading ecoregion layer... ")
         sim$ecoregion <- reproducible::prepInputs(url = Par$ecoregionURL,
                                                   destinationPath = dPath,
-                                                  targetFile = "ecoregions",
-                                                  fun = terra::vect(x = targetFile, crs = "EPSG:3978"))
+                                                  targetFile = "ecoregions.shp",
+                                                  fun = 'terra::vect',#terra::vect(x = targetFile, crs = "EPSG:3978"))
+                                                  to = sim$studyArea_extendedLandscape)
       }
 
       sim$landscapeYearly <- prep_everything(Par$histLandYears, sim$fires, sim$rasterToMatch_extendedLandscape,
