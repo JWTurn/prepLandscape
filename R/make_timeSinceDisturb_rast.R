@@ -19,19 +19,46 @@ make_timeSinceDisturb_rast <- function(layer, rast, disturbanceType, minyr = NUL
   }
 
   timeSinceYearly <- Map(yrName = paste0('year', yearsWithData),yr = yearsWithData, function(yrName, yr) {
+
     subst <- subset(lyr, lyr$YEAR<= yr)
     message(paste0('start ', yrName))
     #fires <-
     suppressWarnings({
 
-      historicalRasters <- terra::rasterize(subst, raster, field="YEAR", fun=max, background = backgrndYear)
-      if(is.null(backgrndTS)){
-        timeSince <- yr - terra::mask(historicalRasters, raster)
-      } else{
-        timeSince1 <- yr - historicalRasters
-        timeSince <- terra::mask(terra::ifel(is.na(timeSince1), backgrndTS, timeSince1), raster)
-      }
+      historicalRasters <- terra::rasterize(
+        subst,
+        raster,
+        field = "YEAR",
+        fun = max,
+        background = backgrndYear,
+        filename = tempfile(pattern = "hist_", fileext = ".tif"),
+        overwrite = TRUE
+      )
 
+      if (is.null(backgrndTS)) {
+
+        timeSince <- terra::mask(
+          yr - historicalRasters,
+          raster,
+          filename = tempfile(pattern = "ts_", fileext = ".tif"),
+          overwrite = TRUE
+        )
+
+      } else {
+
+        timeSince1 <- yr - historicalRasters
+
+        timeSince <- terra::mask(
+          terra::ifel(
+            is.na(timeSince1),
+            backgrndTS,
+            timeSince1
+          ),
+          raster,
+          filename = tempfile(pattern = "ts_", fileext = ".tif"),
+          overwrite = TRUE
+        )
+      }
 
       names(timeSince) <- paste0('timeSince', disturbanceType)
     })

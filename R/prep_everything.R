@@ -6,7 +6,7 @@ prep_everything <- function(histLandYears, fires, rasterToMatch, rtms, rtmFuns, 
   ##### FIRES ----
   histFire <- make_timeSinceDisturb_rast(layer = fires, rast = rasterToMatch,
                                          disturbanceType = 'Fire',
-                                         minyr = min(histLandYears), #maxyr = max(histLandYears),
+                                         minyr = min(Par$histLandYears), maxyr = max(Par$histLandYears),
                                          backgrndYear = backgroundYr, where2save = NULL) |>
     Cache(.cacheExtra = dig, omitArgs = 'rast', .functionName = 'makeTimeSinceFire')
 
@@ -23,7 +23,7 @@ prep_everything <- function(histLandYears, fires, rasterToMatch, rtms, rtmFuns, 
 
   # add recent harvest after NTEMS
 
-  maxHarvNTEMS <- (max(terra::values(harvNTEMS), na.rm = T)+1)
+  maxHarvNTEMS <- terra::global(harvNTEMS, "max", na.rm = TRUE)[1,1] + 1
   newYears <-  seq(maxHarvNTEMS, max(histLandYears))
 
   newHarvRast <- make_CanLad_cumulative(yrs = newYears, disturbTypeCode = 2,
@@ -46,9 +46,19 @@ prep_everything <- function(histLandYears, fires, rasterToMatch, rtms, rtmFuns, 
 
                             harvsYrPos <- clamp(harvs, upper = yr, value = F)
                             maxRast <- max(harvsYrPos, na.rm = T)
-                            timeSince <- yr - maxRast
-                            backgrnd <- yr - background
-                            timeSinceFill <- mask(ifel(is.na(timeSince), backgrnd, timeSince), rtm)
+                            maxRast <- terra::writeRaster(
+                              max(harvsYrPos, na.rm = TRUE),
+                              tempfile(pattern = paste0("maxHarv_", yr, "_"), fileext = ".tif"),
+                              overwrite = TRUE
+                            )
+
+                            timeSinceFill <- terra::mask(
+                              terra::ifel(is.na(maxRast), yr - background, yr - maxRast),
+                              rtm,
+                              filename = tempfile(pattern = paste0("tsh_", yr, "_"), fileext = ".tif"),
+                              overwrite = TRUE
+                            )
+
                             names(timeSinceFill) <- 'timeSinceHarvest'
                             return(timeSinceFill)
                           })|>
@@ -64,7 +74,7 @@ prep_everything <- function(histLandYears, fires, rasterToMatch, rtms, rtmFuns, 
     rtmFun = rtmFuns,
     function(rtm, rtmname, rtmFun) {
 
-    output <-   Map(nn = paste0('year', histLandYears), ii = histLandYears, function(nn, ii) {
+      output <-   Map(nn = paste0('year', histLandYears), ii = histLandYears, function(nn, ii) {
 
         propWindow <- reproducible::prepInputs(
           url = paste0("https://opendata.nfis.org/downloads/forest_change/CA_forest_VLCE2_", ii, ".zip"),
@@ -76,7 +86,7 @@ prep_everything <- function(histLandYears, fires, rasterToMatch, rtms, rtmFuns, 
 
         return(propWindow)
       })
-    return(output)
+      return(output)
     }
   ) |>
     Cache(.functionName = 'make_histLand', .cacheExtra = dig, omitArgs = 'rtm')
@@ -102,7 +112,14 @@ prep_everything <- function(histLandYears, fires, rasterToMatch, rtms, rtmFuns, 
       yearly <- terra::rast(c(
         propLayers,
         list(timeSinceHarvest = tsh),
-        list(timeSinceFire = tsf)))
+        list(timeSinceFire = tsf)
+      ))
+
+      yearly <- terra::writeRaster(
+        yearly,
+        tempfile(pattern = paste0("land_", ii, "_"), fileext = ".tif"),
+        overwrite = TRUE
+      )
 
       return(yearly)
     }

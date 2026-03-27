@@ -41,7 +41,7 @@ defineModule(sim, list(
                     "Should caching of events or module be used?"),
     defineParameter("nbacURL", "character", 'https://cwfis.cfs.nrcan.gc.ca/downloads/nbac/NBAC_1972to2024_20250506_shp.zip', NA, NA,
                     "URL for NBAC (National Burn Area Composite) fire database"),
-    defineParameter("nfdbURL", "character", 'https://cwfis.cfs.nrcan.gc.ca/downloads/nfdb/fire_poly/current_version/NFDB_poly.zip', NA, NA,
+    defineParameter("nfdbURL", "character", 'https://cwfis.cfs.nrcan.gc.ca/downloads/nfdb/fire_poly/current_version/NFDB_poly_pre1972.zip', NA, NA,
                     "URL for National Fire Data Base (NFDB) for back filling NBAC"),
     defineParameter("ecoregionURL", "character", 'https://drive.google.com/drive/folders/1QfR2oKbf_lZYQtRLeTL-wI_2fEwtjbMX', NA, NA,
                     "URL for National ecoregion layer"),
