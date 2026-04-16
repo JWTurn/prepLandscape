@@ -6,3 +6,5 @@
 __MACOSX/
 
 CHECKSUMS.txt
+
+.DS_Store
